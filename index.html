@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PurpleRequest</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #09090f;
+      --panel: #13131d;
+      --panel-light: #191926;
+      --border: #29293d;
+      --purple: #8b5cf6;
+      --purple-light: #a78bfa;
+      --text: #f5f5ff;
+      --muted: #9d9db4;
+      --green: #4ade80;
+      --red: #f87171;
+      --yellow: #facc15;
+    }
+
+    body {
+      background: linear-gradient(180deg, #09090f, #0f0f18);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    .container {
+      max-width: 1500px;
+      margin: 0 auto;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .logo {
+      font-size: 28px;
+      font-weight: 700;
+      background: linear-gradient(90deg, #8b5cf6, #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin-top: 4px;
+      font-size: 14px;
+    }
+
+    .request-bar {
+      background: rgba(19, 19, 29, 0.95);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 16px;
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      box-shadow: 0 0 40px rgba(139, 92, 246, 0.08);
+      margin-bottom: 20px;
+      backdrop-filter: blur(12px);
+    }
+
+    select,
+    input,
+    textarea,
+    button {
+      font-family: inherit;
+    }
+
+    .method-select {
+      min-width: 130px;
+      background: var(--panel-light);
+      color: var(--purple-light);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      font-weight: 600;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .url-input {
+      flex: 1;
+      background: var(--panel-light);
+      border: 1px solid var(--border);
+      color: white;
+      padding: 15px 18px;
+      border-radius: 14px;
+      outline: none;
+      font-size: 15px;
+    }
+
+    .url-input:focus,
+    textarea:focus,
+    .header-input:focus {
+      border-color: var(--purple);
+      box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.12);
+    }
+
+    .send-btn {
+      background: linear-gradient(135deg, #7c3aed, #9333ea);
+      color: white;
+      border: none;
+      padding: 14px 22px;
+      border-radius: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: 0.2s ease;
+      box-shadow: 0 10px 25px rgba(124, 58, 237, 0.3);
+    }
+
+    .send-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .panel {
+      background: rgba(19, 19, 29, 0.96);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 18px;
+      box-shadow: 0 0 30px rgba(139, 92, 246, 0.05);
+      backdrop-filter: blur(10px);
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .panel-title {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .small-btn {
+      background: rgba(139, 92, 246, 0.12);
+      color: var(--purple-light);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      padding: 10px 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: 0.2s ease;
+    }
+
+    .small-btn:hover {
+      background: rgba(139, 92, 246, 0.2);
+    }
+
+    .header-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .header-input {
+      background: var(--panel-light);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 13px;
+      color: white;
+      outline: none;
+    }
+
+    .delete-btn {
+      width: 48px;
+      border-radius: 12px;
+      border: 1px solid rgba(248, 113, 113, 0.2);
+      background: rgba(248, 113, 113, 0.08);
+      color: var(--red);
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    .body-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      gap: 12px;
+    }
+
+    .body-type {
+      background: var(--panel-light);
+      border: 1px solid var(--border);
+      color: white;
+      border-radius: 12px;
+      padding: 12px;
+      outline: none;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 320px;
+      resize: vertical;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: #0d0d14;
+      color: white;
+      padding: 18px;
+      outline: none;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .response-box {
+      background: #0b0b12;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+      min-height: 480px;
+      overflow: auto;
+      font-family: 'JetBrains Mono', monospace;
+      white-space: pre-wrap;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    .status-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .status-pill {
+      background: rgba(139, 92, 246, 0.12);
+      border: 1px solid rgba(139, 92, 246, 0.25);
+      color: var(--purple-light);
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .json-key { color: #c084fc; }
+    .json-string { color: #4ade80; }
+    .json-number { color: #facc15; }
+    .json-boolean { color: #fb7185; }
+    .json-null { color: #94a3b8; }
+
+    .footer-note {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 16px;
+      text-align: center;
+    }
+
+    @media (max-width: 1100px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .request-bar {
+        flex-direction: column;
+      }
+
+      .send-btn,
+      .url-input,
+      .method-select {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div>
+        <div class="logo">PurpleRequest</div>
+        <div class="subtitle">Modern API Testing Client</div>
+      </div>
+    </div>
+
+    <div class="request-bar">
+      <select id="method" class="method-select">
+        <option>GET</option>
+        <option>POST</option>
+        <option>PUT</option>
+        <option>PATCH</option>
+        <option>DELETE</option>
+        <option>OPTIONS</option>
+      </select>
+
+      <input
+        id="url"
+        class="url-input"
+        type="text"
+        placeholder="https://api.example.com/data"
+      />
+
+      <button class="send-btn" id="sendBtn">
+        <span>➜</span>
+        <span>Send</span>
+      </button>
+    </div>
+
+    <div class="grid">
+      <div>
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Headers</div>
+            <button class="small-btn" id="addHeaderBtn">+ Add Header</button>
+          </div>
+
+          <div id="headersContainer"></div>
+        </div>
+
+        <div class="panel" style="margin-top:20px;">
+          <div class="panel-header">
+            <div class="panel-title">Body</div>
+          </div>
+
+          <div class="body-controls">
+            <select id="bodyType" class="body-type">
+              <option value="application/json">JSON</option>
+              <option value="text/plain">Text</option>
+              <option value="application/xml">XML</option>
+              <option value="application/x-www-form-urlencoded">Form URL Encoded</option>
+            </select>
+
+            <button class="small-btn" id="beautifyBtn">Beautify</button>
+          </div>
+
+          <textarea id="bodyInput" placeholder='{
+  "message": "Hello world"
+}'></textarea>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Response</div>
+          </div>
+
+          <div class="status-bar">
+            <div class="status-pill" id="statusCode">Status: -</div>
+            <div class="status-pill" id="responseTime">Time: -</div>
+            <div class="status-pill" id="responseSize">Size: -</div>
+          </div>
+
+          <div class="response-box" id="responseBox">Waiting for request...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      Automatically saves URL, headers, body, and method to localStorage.
+    </div>
+  </div>
+
+  <script>
+    const methodEl = document.getElementById('method');
+    const urlEl = document.getElementById('url');
+    const bodyEl = document.getElementById('bodyInput');
+    const bodyTypeEl = document.getElementById('bodyType');
+    const responseBox = document.getElementById('responseBox');
+    const headersContainer = document.getElementById('headersContainer');
+
+    const STORAGE_KEY = 'purple-request-data';
+
+    function saveState() {
+      const headers = [...document.querySelectorAll('.header-row')].map(row => ({
+        key: row.querySelector('.header-key').value,
+        value: row.querySelector('.header-value').value
+      }));
+
+      const data = {
+        method: methodEl.value,
+        url: urlEl.value,
+        body: bodyEl.value,
+        bodyType: bodyTypeEl.value,
+        headers
+      };
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    function loadState() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (!saved) {
+        addHeaderRow();
+        return;
+      }
+
+      try {
+        const data = JSON.parse(saved);
+
+        methodEl.value = data.method || 'GET';
+        urlEl.value = data.url || '';
+        bodyEl.value = data.body || '';
+        bodyTypeEl.value = data.bodyType || 'application/json';
+
+        headersContainer.innerHTML = '';
+
+        if (data.headers && data.headers.length) {
+          data.headers.forEach(h => addHeaderRow(h.key, h.value));
+        } else {
+          addHeaderRow();
+        }
+      } catch {
+        addHeaderRow();
+      }
+    }
+
+    function addHeaderRow(key = '', value = '') {
+      const row = document.createElement('div');
+      row.className = 'header-row';
+
+      row.innerHTML = `
+        <input class="header-input header-key" placeholder="Header Key" value="${escapeHTML(key)}">
+        <input class="header-input header-value" placeholder="Header Value" value="${escapeHTML(value)}">
+        <button class="delete-btn">×</button>
+      `;
+
+      row.querySelectorAll('input').forEach(input => {
+        input.addEventListener('input', saveState);
+      });
+
+      row.querySelector('.delete-btn').addEventListener('click', () => {
+        row.remove();
+        saveState();
+      });
+
+      headersContainer.appendChild(row);
+      saveState();
+    }
+
+    function escapeHTML(str) {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function syntaxHighlight(json) {
+      if (typeof json !== 'string') {
+        json = JSON.stringify(json, null, 2);
+      }
+
+      json = escapeHTML(json);
+
+      return json.replace(
+        /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+        match => {
+          let cls = 'json-number';
+
+          if (/^"/.test(match)) {
+            cls = /:$/.test(match) ? 'json-key' : 'json-string';
+          } else if (/true|false/.test(match)) {
+            cls = 'json-boolean';
+          } else if (/null/.test(match)) {
+            cls = 'json-null';
+          }
+
+          return `<span class="${cls}">${match}</span>`;
+        }
+      );
+    }
+
+    async function sendRequest() {
+      const method = methodEl.value;
+      const url = urlEl.value.trim();
+
+      if (!url) {
+        alert('Please enter a URL');
+        return;
+      }
+
+      const headers = {};
+
+      document.querySelectorAll('.header-row').forEach(row => {
+        const key = row.querySelector('.header-key').value.trim();
+        const value = row.querySelector('.header-value').value.trim();
+
+        if (key) headers[key] = value;
+      });
+
+      if (!headers['Content-Type'] && method !== 'GET') {
+        headers['Content-Type'] = bodyTypeEl.value;
+      }
+
+      responseBox.innerHTML = 'Sending request...';
+
+      const start = performance.now();
+
+      try {
+        const options = {
+          method,
+          headers
+        };
+
+        if (method !== 'GET' && method !== 'HEAD') {
+          options.body = bodyEl.value;
+        }
+
+        const response = await fetch(url, options);
+
+        const time = Math.round(performance.now() - start);
+        const text = await response.text();
+
+        document.getElementById('statusCode').textContent = `Status: ${response.status} ${response.statusText}`;
+        document.getElementById('responseTime').textContent = `Time: ${time}ms`;
+        document.getElementById('responseSize').textContent = `Size: ${(new Blob([text]).size / 1024).toFixed(2)} KB`;
+
+        try {
+          const json = JSON.parse(text);
+          responseBox.innerHTML = syntaxHighlight(JSON.stringify(json, null, 2));
+        } catch {
+          responseBox.textContent = text;
+        }
+      } catch (err) {
+        responseBox.innerHTML = `<span style="color:#f87171;">${escapeHTML(err.message)}</span>`;
+      }
+    }
+
+    document.getElementById('addHeaderBtn').addEventListener('click', () => {
+      addHeaderRow();
+    });
+
+    document.getElementById('beautifyBtn').addEventListener('click', () => {
+      try {
+        const parsed = JSON.parse(bodyEl.value);
+        bodyEl.value = JSON.stringify(parsed, null, 2);
+        saveState();
+      } catch {
+        alert('Invalid JSON');
+      }
+    });
+
+    document.getElementById('sendBtn').addEventListener('click', sendRequest);
+
+    [methodEl, urlEl, bodyEl, bodyTypeEl].forEach(el => {
+      el.addEventListener('input', saveState);
+      el.addEventListener('change', saveState);
+    });
+
+    loadState();
+  </script>
+</body>
+</html>
