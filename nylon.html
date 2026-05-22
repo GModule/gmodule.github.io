@@ -1,0 +1,2297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nylon V5</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: #050505;
+        color: #e5e7eb;
+        overflow: hidden;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0a0a0a; }
+    ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #444; }
+
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+    
+    .glass-panel {
+        background: #0f0f0f;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    
+    .glass-modal {
+        background: #0a0a0a;
+        border: 1px solid rgba(168, 85, 247, 0.3);
+    }
+
+    /* Bitmoji Lab Styles */
+    .ref-row { display: flex; justify-content: space-between; padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; transition: background 0.2s; }
+    .ref-row:hover { background: rgba(168, 85, 247, 0.2); }
+    .ref-name { font-size: 11px; color: #ccc; }
+    .ref-id { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #a855f7; }
+
+    details > summary { list-style: none; cursor: pointer; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 6px; font-weight: 600; font-size: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; border: 1px solid transparent; transition: all 0.2s; }
+    details > summary:hover { border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); }
+    details[open] > summary { background: rgba(168, 85, 247, 0.1); color: #a855f7; border-color: rgba(168, 85, 247, 0.2); }
+    details > div { padding: 4px 0 12px 0; }
+
+    .nsfw-blur { filter: blur(12px); pointer-events: none; user-select: none; transition: filter 0.5s ease; }
+    .nsfw-unblur { filter: blur(0px) !important; pointer-events: auto; user-select: auto; }
+
+    .image-card { transition: transform 0.2s; background: #111; border: 1px solid rgba(255,255,255,0.05); }
+    .image-card:hover { transform: translateY(-4px); border-color: #a855f7; }
+
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+    /* Loading Screen Animation */
+    #loader {
+        position: fixed;
+        inset: 0; z-index: 100;
+        background: #000;
+        display: flex; align-items: center; justify-content: center;
+        transition: opacity 0.8s ease-out;
+    }
+
+    .sidebar-item { transition: all 0.2s ease; cursor: pointer; border-left: 3px solid transparent; }
+    .sidebar-item:hover { background: rgba(168, 85, 247, 0.1); color: #c084fc; }
+    .sidebar-active {
+        background: rgba(168, 85, 247, 0.15);
+        color: #d8b4fe;
+        border-left: 3px solid #a855f7;
+    }
+
+    .tag-badge {
+        font-size: 0.65rem;
+        padding: 2px 8px;
+        border-radius: 9999px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .tag-dev { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; border: 1px solid rgba(168, 85, 247, 0.3); }
+    .tag-trusted { background: rgba(59, 130, 246, 0.2); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.3); }
+
+    .hidden-page { display: none; }
+    .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div id="loader">
+    <div class="flex flex-col items-center">
+        <div class="w-12 h-12 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <h2 class="text-xl font-bold tracking-[0.2em] text-white">NYLON</h2>
+    </div>
+</div>
+
+<div id="details-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 hidden opacity-0 transition-opacity duration-300">
+    <div class="glass-modal p-8 rounded-2xl w-full max-w-2xl transform scale-95 transition-transform duration-300" id="modal-content-box">
+        <div class="flex justify-between items-start mb-6">
+            <div>
+                <h2 id="modal-title" class="text-3xl font-bold text-white">Package Name</h2>
+                <div id="modal-tags" class="flex gap-2 mt-2"></div>
+                <p id="modal-version" class="text-purple-400 text-sm mt-1">v1.0.0</p>
+            </div>
+            <button onclick="closeModal('details-modal')" class="p-2 hover:bg-white/10 rounded-full transition"><i data-lucide="x" class="w-6 h-6"></i></button>
+        </div>
+        <div class="space-y-4">
+            <p id="modal-desc" class="text-gray-300 leading-relaxed">Description goes here.</p>
+        </div>
+        <div class="mt-8 flex justify-end gap-4">
+            <button onclick="closeModal('details-modal')" class="px-6 py-2 rounded-lg hover:bg-white/5 transition">Close</button>
+            <button id="modal-action-btn" class="bg-purple-600 hover:bg-purple-700 px-6 py-2 rounded-lg font-bold transition">Action</button>
+        </div>
+    </div>
+</div>
+
+<div id="image-modal" class="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 hidden" onclick="closeModal('image-modal')">
+    <div class="relative max-w-3xl max-h-[90vh] p-2">
+        <img id="expanded-image" src="" class="max-w-full max-h-[85vh] rounded-lg border border-purple-500/30 shadow-2xl shadow-purple-900/50">
+        <p class="text-center text-gray-400 mt-2 text-sm font-mono">Click anywhere to close</p>
+    </div>
+</div>
+
+
+    <!-- Bitmoji Lab Modals -->
+    <div id="bm-input-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm">
+        <div class="bg-[#111] border border-white/10 p-6 rounded-xl w-full max-w-sm shadow-2xl">
+            <h3 id="bm-input-modal-title" class="text-lg font-bold text-white mb-1">Title</h3>
+            <p id="bm-input-modal-desc" class="text-xs text-gray-500 mb-4">Description text here.</p>
+            <input type="text" id="bm-input-modal-field" class="w-full bg-black border border-white/20 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500 mb-6" placeholder="Collection Name..." onkeydown="if(event.key === 'Enter') bmCommitInputModal()">
+            <div class="flex gap-3">
+                <button onclick="bmCloseInputModal()" class="flex-1 py-2 rounded border border-white/10 text-gray-400 text-sm hover:bg-white/5 transition">Cancel</button>
+                <button onclick="bmCommitInputModal()" class="flex-1 py-2 rounded bg-purple-600 text-white text-sm font-bold hover:bg-purple-700 transition">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="bm-delete-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm">
+        <div class="bg-[#111] border border-red-900/50 p-6 rounded-xl w-full max-w-sm shadow-2xl">
+            <h3 class="text-lg font-bold text-white mb-2 text-center">Delete Collection?</h3>
+            <p class="text-xs text-gray-500 mb-6 text-center">This action cannot be undone. Are you sure?</p>
+            <div class="flex gap-3">
+                <button onclick="bmCloseDeleteModal()" class="flex-1 py-2 rounded border border-white/10 text-gray-400 text-sm hover:bg-white/5 transition">Cancel</button>
+                <button onclick="bmCommitDelete()" class="flex-1 py-2 rounded bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="bm-age-modal" class="hidden fixed inset-0 z-[70] flex items-center justify-center bg-black/95 backdrop-blur-md">
+        <div class="bg-[#111] border border-red-900/50 p-8 rounded-xl max-w-sm w-full text-center shadow-2xl shadow-red-900/30">
+            <div class="mx-auto w-14 h-14 bg-red-900/20 rounded-full flex items-center justify-center mb-5 border border-red-500/20">
+                <i data-lucide="shield-alert" class="text-red-500" size="28"></i>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2">Age Verification</h3>
+            <p class="text-sm text-gray-400 mb-6 leading-relaxed">This section contains restricted IDs flagged for nudity or bannable content.<br>By proceeding, you confirm you are 18+.</p>
+            <div class="flex gap-3">
+                <button onclick="bmCloseAgeModal()" class="flex-1 py-3 rounded bg-white/5 text-gray-300 text-sm font-bold hover:bg-white/10 transition">Cancel</button>
+                <button onclick="bmConfirmAge()" class="flex-1 py-3 rounded bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition shadow-lg shadow-red-900/40">I am 18+</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="bm-preview-modal" class="hidden fixed inset-0 z-[80] flex items-center justify-center bg-black/95 backdrop-blur-md" onclick="bmClosePreview()">
+        <div class="relative max-w-3xl w-full flex flex-col items-center p-6">
+            <div class="bg-[#111] p-4 rounded-2xl border border-white/10 shadow-2xl relative">
+                <img id="bm-modal-img" src="" class="max-h-[70vh] object-contain drop-shadow-2xl">
+                <div class="absolute top-4 right-4 bg-black/60 backdrop-blur rounded px-3 py-1 text-xs font-mono text-white border border-white/10" id="bm-modal-label">ID</div>
+            </div>
+            <div class="mt-4 text-gray-500 text-xs uppercase tracking-widest animate-pulse">Click anywhere to close</div>
+        </div>
+    </div>
+
+<div class="flex h-screen w-full">
+    <aside class="w-64 glass-panel border-r border-white/5 flex flex-col p-4 z-20">
+        <div class="flex items-center gap-3 px-2 mb-10 mt-2">
+            <div class="p-2 bg-purple-900/30 rounded-lg border border-purple-500/30">
+                <i data-lucide="zap" class="w-6 h-6 text-purple-400"></i>
+            </div>
+            <span class="text-xl font-bold tracking-tight">Nylon <span class="text-purple-500">V5</span></span>
+        </div>
+
+        <nav class="space-y-1 flex-1">
+            <div onclick="showPage('home')" class="sidebar-item sidebar-active flex items-center gap-3 p-3 rounded-r-lg" id="nav-home">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Home
+            </div>
+            
+            <div onclick="showPage('packages')" class="sidebar-item flex items-center gap-3 p-3 rounded-r-lg" id="nav-packages">
+                <i data-lucide="shopping-bag" class="w-5 h-5"></i> Packages
+            </div>
+
+            <div onclick="showPage('library')" class="sidebar-item flex items-center gap-3 p-3 rounded-r-lg" id="nav-library">
+                <i data-lucide="library" class="w-5 h-5"></i> Library
+            </div>
+
+            <div onclick="showPage('network')" class="sidebar-item flex items-center gap-3 p-3 rounded-r-lg hidden" id="nav-network">
+                <i data-lucide="network" class="w-5 h-5"></i> Network
+            </div>
+
+            <div onclick="showPage('matrix')" class="sidebar-item flex items-center gap-3 p-3 rounded-r-lg hidden border-l-4 border-green-500 bg-green-500/10 text-green-400" id="nav-matrix">
+                <i data-lucide="play-circle" class="w-5 h-5"></i> Matrix
+            </div>
+
+            <div onclick="showPage('bot')" class="sidebar-item flex items-center gap-3 p-3 rounded-r-lg" id="nav-bot">
+                <i data-lucide="users" class="w-5 h-5"></i> ID Browser
+            </div>
+        </nav>
+
+        <div onclick="showPage('settings')" class="sidebar-item mt-auto flex items-center gap-3 p-3 rounded-r-lg" id="nav-settings">
+            <i data-lucide="settings" class="w-5 h-5"></i> Settings
+        </div>
+    </aside>
+
+    <main class="flex-1 overflow-y-auto p-8 relative bg-[#050505]">
+        
+        <section id="page-home" class="page-content animate-in fade-in duration-500">
+            <h1 class="text-3xl font-bold mb-8">Dashboard</h1>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="glass-panel p-6 rounded-xl border-l-4 border-purple-500">
+                    <h3 class="text-gray-400 text-sm">System Status</h3>
+                    <p class="text-2xl font-bold mt-1 text-white">Online</p>
+                </div>
+                <div class="glass-panel p-6 rounded-xl border-l-4 border-blue-500">
+                    <h3 class="text-gray-400 text-sm">Modules Loaded</h3>
+                    <p class="text-2xl font-bold mt-1 text-white" id="module-count-display">0</p>
+                </div>
+                <div class="glass-panel p-6 rounded-xl border-l-4 border-green-500">
+                    <h3 class="text-gray-400 text-sm">Security</h3>
+                    <p class="text-2xl font-bold mt-1 text-green-400">Protected</p>
+                </div>
+            </div>
+
+            <h2 class="text-xl font-bold mb-4">Core Tools</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="glass-panel p-5 rounded-xl hover:border-purple-500/40 transition flex items-center gap-4 cursor-pointer group" onclick="launchNylon()">
+                    <div class="p-4 bg-purple-900/20 rounded-lg group-hover:bg-purple-900/40 transition">
+                        <i data-lucide="user-cog" class="w-8 h-8 text-purple-400"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-lg text-white">Nylon Avatar</h3>
+                        <p class="text-sm text-gray-400">Launch Avatar Matrix</p>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-5 h-5 text-gray-600 ml-auto group-hover:text-purple-400"></i>
+                </div>
+            </div>
+        </section>
+
+        <section id="page-packages" class="page-content hidden-page">
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <h2 class="text-2xl font-bold">Package Registry</h2>
+                    <p class="text-gray-400 text-sm mt-1">Install tools for Nexus OS.</p>
+                </div>
+                <div class="bg-zinc-900 border border-white/10 rounded-lg px-4 py-2 flex items-center gap-2 w-64">
+                    <i data-lucide="search" class="w-4 h-4 text-gray-500"></i>
+                    <input type="text" id="package-search" placeholder="Search modules..." class="bg-transparent outline-none text-sm w-full text-white" onkeyup="filterPackages()">
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="packages-container">
+            </div>
+        </section>
+
+        <section id="page-library" class="page-content hidden-page">
+            <h2 class="text-2xl font-bold mb-6">Installed Library</h2>
+            <div id="library-empty-state" class="hidden flex flex-col items-center justify-center h-64 border-2 border-dashed border-white/5 rounded-2xl">
+                <i data-lucide="box" class="w-10 h-10 text-gray-600 mb-4"></i>
+                <p class="text-gray-500">No packages installed.</p>
+                <button onclick="showPage('packages')" class="mt-4 text-purple-400 hover:text-purple-300 text-sm">Go to Store</button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="library-container">
+            </div>
+        </section>
+
+        <section id="page-network" class="page-content hidden-page">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                    <h2 class="text-2xl font-bold">Network Manager</h2>
+                    <span class="bg-purple-900/30 text-purple-300 text-xs px-2 py-1 rounded border border-purple-500/30">DEV MODE</span>
+                </div>
+                <button onclick="clearRequestHistory()" class="text-xs text-gray-500 hover:text-red-400">Clear History</button>
+            </div>
+            
+            <div class="glass-panel p-6 rounded-2xl space-y-4 shadow-xl mb-6">
+                <div class="flex gap-4">
+                    <select id="req-method" class="bg-black/50 border border-white/10 rounded-lg px-4 py-2 outline-none focus:border-purple-500 text-sm font-mono text-white">
+                        <option value="GET">GET</option>
+                        <option value="POST">POST</option>
+                        <option value="PUT">PUT</option>
+                        <option value="DELETE">DELETE</option>
+                    </select>
+                    <input id="req-url" type="text" placeholder="https://api.example.com/v1" class="flex-1 bg-black/50 border border-white/10 rounded-lg px-4 py-2 outline-none focus:border-purple-500 font-mono text-sm text-purple-300">
+                    <button onclick="sendRealRequest()" class="bg-purple-600 hover:bg-purple-700 px-6 py-2 rounded-lg font-bold transition flex items-center gap-2">
+                        <i data-lucide="send" class="w-4 h-4"></i> SEND
+                    </button>
+                </div>
+
+                <div class="border-t border-white/5 pt-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-xs font-mono text-gray-500 uppercase tracking-wider">Custom Headers</label>
+                        <button onclick="addHeaderRow()" class="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1">
+                            <i data-lucide="plus" class="w-3 h-3"></i> Add Header
+                        </button>
+                    </div>
+                    <div id="headers-container" class="space-y-2 mb-4">
+                        <div class="flex gap-2 header-row">
+                            <input type="text" placeholder="Key (e.g., Authorization)" class="header-key flex-1 bg-black/30 border border-white/10 rounded px-3 py-1 text-xs text-gray-300 focus:border-purple-500 outline-none">
+                            <input type="text" placeholder="Value" class="header-val flex-1 bg-black/30 border border-white/10 rounded px-3 py-1 text-xs text-gray-300 focus:border-purple-500 outline-none">
+                            <button onclick="this.parentElement.remove()" class="text-gray-600 hover:text-red-400 px-2"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-xs font-mono text-gray-500 mb-2 uppercase tracking-wider">Payload Body (JSON)</label>
+                        <textarea id="req-body" class="w-full h-64 bg-black/50 border border-white/10 rounded-xl p-4 font-mono text-xs outline-none focus:border-purple-500 resize-none text-gray-300" placeholder='{"key": "value"}'></textarea>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                             <label class="block text-xs font-mono text-gray-500 uppercase tracking-wider">Response / Scraper Output</label>
+                             <button onclick="toggleScraperMode()" class="text-xs text-blue-400 hover:text-blue-300" id="scraper-toggle-btn">Switch to Scraper View</button>
+                        </div>
+                        <div id="req-output" class="w-full h-64 bg-[#050505] border border-white/5 rounded-xl p-4 font-mono text-xs overflow-y-auto text-green-400">
+                            // Waiting for request...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-panel p-4 rounded-xl">
+                <h3 class="text-sm font-bold mb-3 text-gray-400 uppercase tracking-wider">Recent Requests</h3>
+                <div id="req-history-list" class="space-y-2 max-h-40 overflow-y-auto pr-2">
+                </div>
+            </div>
+        </section>
+
+        <section id="page-matrix" class="page-content hidden-page">
+            <div class="flex items-center justify-between mb-4 pb-4 border-b border-white/5">
+                <div class="flex items-center gap-3">
+                    <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                    <h2 class="text-xl font-mono text-green-400" id="matrix-app-title">Active Process</h2>
+                </div>
+                <button onclick="exitMatrix()" class="text-xs bg-zinc-800 hover:bg-zinc-700 text-white px-3 py-1 rounded-full flex items-center gap-1 transition">
+                    <i data-lucide="x" class="w-3 h-3"></i> Exit Environment
+                </button>
+            </div>
+            
+            <div id="matrix-container" class="w-full h-[calc(100vh-12rem)] rounded-xl overflow-hidden relative overflow-y-auto">
+            </div>
+        </section>
+
+        <section id="page-bot" class="page-content hidden-page">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold">ID Browser</h2>
+                    <div class="text-xs text-gray-500 font-mono mt-1">Source: batch_1_18_26.json</div>
+                </div>
+                <div class="flex gap-2 w-full md:w-auto">
+                    <div class="relative flex-1 md:w-64">
+                         <i data-lucide="search" class="w-4 h-4 text-gray-500 absolute left-3 top-2.5"></i>
+                         <input type="text" id="id-browser-search" placeholder="Search (e.g. beard, 1234)..." class="w-full bg-zinc-900 border border-white/10 rounded-lg pl-9 pr-4 py-2 text-sm outline-none text-white focus:border-purple-500 transition" onkeyup="renderIdBrowser()">
+                    </div>
+                    <button onclick="refreshIdDb()" class="bg-zinc-800 hover:bg-purple-900/50 text-white px-3 py-2 rounded-lg transition" title="Refresh Database">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="id-browser-status" class="hidden mb-4 p-3 bg-blue-900/20 text-blue-300 text-xs rounded border border-blue-500/20"></div>
+            
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4" id="id-grid-container">
+                </div>
+        </section>
+
+        <section id="page-settings" class="page-content hidden-page">
+            <h2 class="text-2xl font-bold mb-6">System Settings</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="glass-panel p-6 rounded-2xl">
+                    <h3 class="text-lg font-semibold mb-4 text-purple-400">Preferences</h3>
+                    
+                    <div class="flex items-center justify-between py-3 border-b border-white/5">
+                        <div>
+                            <p class="font-medium">Developer Mode</p>
+                            <p class="text-xs text-gray-500">Enables Network Manager and advanced tools.</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="toggle-mod-mode" class="sr-only peer" onchange="toggleModMode()">
+                            <div class="w-11 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-6 rounded-2xl border border-red-900/20">
+                    <h3 class="text-lg font-semibold mb-4 text-red-400">Data Management</h3>
+                    
+                    <div class="space-y-3 mb-6">
+                        <label class="flex items-center gap-3 p-2 hover:bg-white/5 rounded cursor-pointer">
+                            <input type="checkbox" class="w-4 h-4 bg-transparent data-checkbox" value="mod">
+                            <span class="text-sm">Developer/Nylon Data</span>
+                        </label>
+                        <label class="flex items-center gap-3 p-2 hover:bg-white/5 rounded cursor-pointer">
+                            <input type="checkbox" class="w-4 h-4 bg-transparent data-checkbox" value="settings">
+                            <span class="text-sm">Settings Data</span>
+                        </label>
+                        <label class="flex items-center gap-3 p-2 hover:bg-white/5 rounded cursor-pointer">
+                            <input type="checkbox" class="w-4 h-4 bg-transparent data-checkbox" value="packages">
+                            <span class="text-sm">Package Data</span>
+                        </label>
+                        <label class="flex items-center gap-3 p-2 hover:bg-white/5 rounded cursor-pointer">
+                            <input type="checkbox" class="w-4 h-4 bg-transparent data-checkbox" value="all">
+                            <span class="text-sm font-bold text-white">ALL DATA</span>
+                        </label>
+                    </div>
+
+                    <button onclick="clearSelectedData()" class="w-full bg-red-900/20 hover:bg-red-900/40 text-red-400 border border-red-500/20 py-2 rounded-lg transition text-sm font-bold">
+                        Clear Selected Data
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+</div>
+
+<script>
+
+    // Bitmoji Lab State
+    let bmIsScraping = false;
+    let bmStopRequested = false;
+    let bmCurrentResults = [];
+    let bmIsAdultVerified = false;
+    let bmInputModalMode = null;
+    let bmEditingBatchId = null;
+    let bmDeletingBatchId = null;
+    const NSFW_IDS = [10082482, 10083135, 10024694, 10082474, 10082537, 10084734];
+
+    
+    // --- 1. STATE & DATA ---
+    const packagesDB = [
+        {
+            id: 'yab-encrypter',
+            name: 'YAB Encrypter',
+            shortDesc: 'Advanced 20-method encryption suite.',
+            longDesc: 'A premium cryptography suite featuring 20 distinct encoding, hashing, and cipher algorithms. Includes standard protocols like Base64 and SHA-256, alongside classical ciphers and utility transformations. Designed for high-speed local processing.',
+            versions: ['6.1.0'],
+            size: '8.1MB',
+            icon: 'lock',
+            tags: ['NYLON', 'trusted package', 'security'],
+            appHtml: '' 
+        },
+        {
+            id: 'bitmoji-lab',
+            name: 'Bitmoji Lab',
+            shortDesc: 'Advanced ID scanner and discovery tool.',
+            longDesc: 'A comprehensive Bitmoji ID scanning tool with range-based discovery, saved collections, age-gated content, and a curated library of premium IDs including Versace items, eye colors, and exclusive outfits.',
+            versions: ['2.1.0'],
+            size: '62.7MB',
+            icon: 'scan',
+            tags: ['NYLON', 'trusted package', 'tools'],
+            appHtml: '' // Will be populated by renderBitmojiLab()
+        },
+        {
+          id: 'proxy-module',
+          name: 'Proxy Module',
+          shortDesc: 'Route Nylon Avatar requests through proxy layers.',
+          longDesc: 'Adds a Proxy control tab to the Nylon Avatar Matrix. Supports Nylon Proxies, rotating public proxies, and fully custom proxy lists with persistent local storage and strict proxy-only enforcement.',
+          versions: ['1.0.0'],
+          size: '10.2MB',
+          icon: 'shuffle',
+          tags: ['developer: gmodule', 'trusted package', 'network'],
+          appHtml: '' // Injects into Nylon, not standalone
+        }
+    ];
+
+    // --- 1. CORE UTILITIES ---
+    function initProxyUI() {
+      const cfg = JSON.parse(
+        localStorage.getItem('nylon_proxy_config')
+      ) || {
+        enabled: false,
+        disableLocal: false,
+        type: 'nylon',
+        custom: []
+      };
+
+      window.nylonProxyConfig = cfg;
+
+      const enabledEl = document.getElementById('proxy-enabled');
+      const disableLocalEl = document.getElementById('proxy-disable-local');
+      const typeEl = document.getElementById('proxy-type');
+
+      if (!enabledEl || !typeEl) {
+        console.warn('Proxy UI not mounted yet');
+        return;
+      }
+
+      enabledEl.checked = cfg.enabled;
+      disableLocalEl.checked = cfg.disableLocal;
+      typeEl.value = cfg.type;
+
+      onProxyTypeChange();
+    }
+
+
+    // --- 2. DYNAMIC ATTRIBUTE GENERATOR ---
+    const extendedOptionIds = {
+        "skin_tone": 0, "hair": 0, "hair_tone": 0, "top": 0, "bottom": 0, 
+        "footwear": 0, "sock": 0, "body": 0, "breast": 0, "beard_tone": 0,
+        "clothing_type": 0, "is_tucked": 0, "ua": 0, "brow_tone": 0
+    };
+
+    // Auto-generate tones 1-10
+    ['top', 'bottom', 'footwear', 'outerwear', 'hat', 'sock'].forEach(item => {
+        for(let i=1; i<=10; i++) { extendedOptionIds[`${item}_tone${i}`] = 0; }
+    });
+
+    const defaultNylonData = {
+        "mode": "edit", "gender": 1, "style": 5,
+        "option_ids": {
+            "face_proportion": 0, "face_lines": 0, "cheek_details": 0, "jaw": 0, "brow": 0, 
+            "eye": 0, "eye_details": 0, "eye_size": 0, "eye_spacing": 0, "pupil": 0, 
+            "pupil_tone": 0, "eyelash": 0, "nose": 0, "mouth": 0, "ear": 0, "beard": 0,
+            "glasses": 0, "hat": 0, "earring": 0, "outfit": 0, "blush_tone": 0, "eyeshadow_tone": 0,
+            ...extendedOptionIds
+        }
+    };
+
+    // SINGLE DECLARATION
+    let nylonCurrentData = JSON.parse(localStorage.getItem('nylon_current_data') || JSON.stringify(defaultNylonData));
+    
+    // Load from local storage or default
+
+
+    const nylonAppHtml = `
+        <div class="h-full flex flex-col md:flex-row gap-6 p-4">
+            <div class="w-full md:w-1/3 glass-panel rounded-xl p-4 flex flex-col items-center">
+                <h3 class="font-bold text-purple-400 mb-4">My Avatar</h3>
+                <div class="w-48 h-48 bg-zinc-900 rounded-full flex items-center justify-center border-4 border-purple-500/20 mb-6 overflow-hidden relative">
+                    <img src="" class="w-full h-full object-cover opacity-80" id="nylon-preview-img">
+                </div>
+                
+               <div class="grid grid-cols-3 gap-2 mb-4">
+    <button onclick="nylonAction('update')" class="bg-blue-600 hover:bg-blue-500 text-white py-2 rounded text-xs font-bold transition">Update</button>
+    <button onclick="nylonAction('create')" class="bg-green-600 hover:bg-green-500 text-white py-2 rounded text-xs font-bold transition">Create</button>
+    <button onclick="nylonAction('reset')" class="bg-red-600 hover:bg-red-500 text-white py-2 rounded text-xs font-bold transition">Reset</button>
+</div>
+
+<div class="text-[10px] text-zinc-500 italic text-center mb-4 px-2">
+    If spawning paid items or modded please use the reset or create option!
+</div>
+                
+                <div class="w-full mt-4 p-2 bg-black/50 rounded text-[10px] text-gray-500 font-mono break-all" id="nylon-status-log">
+                    Ready to fetch.
+                </div>
+            </div>
+
+            <div class="w-full md:w-2/3 flex flex-col gap-4">
+              <div class="glass-panel p-4 rounded-xl">
+  <div class="flex gap-4 border-b border-white/10 pb-4 mb-4">
+    <button onclick="switchNylonTab('token')" id="tab-btn-token"
+      class="text-sm font-bold text-white border-b-2 border-purple-500 pb-1">
+      Bitmoji-Token
+    </button>
+
+    <button onclick="switchNylonTab('bearer')" id="tab-btn-bearer"
+      class="text-sm font-bold text-gray-500 hover:text-white pb-1">
+      Bearer Authorization
+    </button>
+
+    <button onclick="switchNylonTab('proxy')" id="tab-btn-proxy"
+      class="text-sm font-bold text-gray-500 hover:text-white pb-1">
+      Proxy
+    </button>
+  </div>
+
+  <!-- TOKEN TAB -->
+  <div id="tab-content-token">
+    <input type="text" id="input-bitmoji-token"
+      class="w-full bg-black border border-white/10 p-2 rounded text-xs mb-2 text-yellow-500 font-mono"
+      placeholder="Enter Bitmoji-Token..."
+      oninput="saveNylonAuth()">
+  </div>
+
+  <!-- BEARER TAB -->
+  <div id="tab-content-bearer" class="hidden">
+    <input type="text" id="input-bearer-token"
+      class="w-full bg-black border border-white/10 p-2 rounded text-xs mb-2 text-green-500 font-mono"
+      placeholder="Bearer eyJhbGciOi..."
+      oninput="saveNylonAuth()">
+  </div>
+
+  <!-- PROXY TAB -->
+  <div id="tab-content-proxy" class="hidden space-y-3">
+
+    <div class="flex items-center justify-between">
+      <span class="text-xs font-bold text-gray-400 uppercase">Proxy Module</span>
+
+      <label class="relative inline-flex items-center cursor-pointer">
+        <input type="checkbox" id="proxy-enabled" class="sr-only peer"
+          onchange="saveProxyConfig()">
+        <div class="w-11 h-6 bg-zinc-800 rounded-full peer-checked:bg-purple-600
+                    after:content-[''] after:absolute after:top-[2px] after:left-[2px]
+                    after:bg-white after:h-5 after:w-5 after:rounded-full
+                    after:transition-all peer-checked:after:translate-x-full">
+        </div>
+      </label>
+    </div>
+
+    <select id="proxy-type"
+      class="w-full bg-black border border-white/10 rounded p-2 text-xs"
+      onchange="onProxyTypeChange()">
+      <option value="nylon">Nylon Proxy (1)</option>
+      <option value="public">Public Proxy (10)</option>
+      <option value="custom">Custom Proxy</option>
+    </select>
+
+    <div class="flex items-center justify-between text-xs">
+      <span class="text-red-400">Disable Local Network Requests</span>
+      <input type="checkbox" id="proxy-disable-local"
+        onchange="saveProxyConfig()">
+    </div>
+
+    <div id="custom-proxy-editor" class="hidden space-y-2">
+      <button onclick="addCustomProxy()" class="text-xs text-purple-400">
+        + Add Proxy
+      </button>
+      <div id="custom-proxy-list" class="space-y-1"></div>
+    </div>
+
+  </div>
+
+  <button onclick="fetchAvatarData()"
+    class="w-full mt-4 bg-purple-600 hover:bg-purple-700 py-2 rounded font-bold text-sm">
+    Fetch Avatar Info
+  </button>
+   <button onclick="findtoken()"
+      class="w-full mt-4 bg-purple-600 hover:bg-purple-700 py-2 rounded font-bold text-sm">
+      Download Auto Token Finder
+    </button>
+</div>
+
+
+
+                <div class="glass-panel p-4 rounded-xl flex-1 flex flex-col overflow-hidden">
+                    <h3 class="text-xs font-bold text-gray-500 uppercase mb-3">Attribute Editor (Cluster)</h3>
+                    <div id="nylon-attributes-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 overflow-y-auto pr-2 pb-2">
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    const store = {
+        getPackages: () => JSON.parse(localStorage.getItem('nexus_installed') || '[]'),
+        setPackages: (arr) => localStorage.setItem('nexus_installed', JSON.stringify(arr)),
+        isModEnabled: () => localStorage.getItem('nexus_mod_mode') === 'true',
+        setModEnabled: (val) => localStorage.setItem('nexus_mod_mode', val),
+        getModHistory: () => JSON.parse(localStorage.getItem('nexus_mod_history') || '[]'),
+        setModHistory: (arr) => localStorage.setItem('nexus_mod_history', JSON.stringify(arr)),
+        getDbCache: () => JSON.parse(localStorage.getItem('nexus_id_db') || 'null'),
+        setDbCache: (data) => localStorage.setItem('nexus_id_db', JSON.stringify(data)),
+    };
+
+    // --- 2. INITIALIZATION ---
+
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            document.getElementById('loader').style.opacity = '0';
+            setTimeout(() => document.getElementById('loader').style.display = 'none', 800);
+        }, 800);
+
+        lucide.createIcons();
+
+        // Settings
+        const modMode = store.isModEnabled();
+        document.getElementById('toggle-mod-mode').checked = modMode;
+        if(modMode) document.getElementById('nav-network').classList.remove('hidden');
+
+        // Renders
+        renderPackages();
+        renderLibrary();
+        renderModHistory();
+        updateStats();
+
+        // AUTO-LOAD AVATAR IF TOKEN EXISTS
+        setTimeout(() => {
+            const token = localStorage.getItem('nylon_token');
+            const bearer = localStorage.getItem('nylon_bearer');
+
+            if (token || bearer) {
+                console.log("Token found, auto-loading avatar preview...");
+                // Don't need to launch full tool, just update preview
+                updateAvatarPreview();
+            }
+        }, 100);
+    });
+
+    // --- 3. NAVIGATION ---
+    function showPage(pageId) {
+        document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden-page'));
+        document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('sidebar-active'));
+        document.getElementById(`page-${pageId}`).classList.remove('hidden-page');
+        document.getElementById(`nav-${pageId}`).classList.add('sidebar-active');
+
+        if (pageId === 'packages') renderPackages();
+        if (pageId === 'library') renderLibrary();
+        if (pageId === 'bot') renderIdBrowser();
+    }
+
+    function onProxyTypeChange() {
+      const type = document.getElementById('proxy-type')?.value;
+      const editor = document.getElementById('custom-proxy-editor');
+
+      if (!editor) return;
+
+      if (type === 'custom') {
+        editor.classList.remove('hidden');
+        renderCustomProxies();
+      } else {
+        editor.classList.add('hidden');
+      }
+
+      saveProxyConfig();
+    }
+
+
+
+    // --- 4. PACKAGE RENDERER ---
+    function renderPackages(filter = '') {
+        const container = document.getElementById('packages-container');
+        const installed = store.getPackages();
+        container.innerHTML = '';
+
+        const filtered = packagesDB.filter(p => p.name.toLowerCase().includes(filter));
+        filtered.forEach(pkg => {
+            const isInstalled = installed.includes(pkg.id);
+            
+            // Generate Tags
+            let tagsHtml = '';
+            if(pkg.tags) {
+                pkg.tags.forEach(tag => {
+                    if(tag.includes('developer')) tagsHtml += `<span class="tag-badge tag-dev mr-1">${tag}</span>`;
+                    else if(tag.includes('trusted')) tagsHtml += `<span class="tag-badge tag-trusted mr-1">${tag}</span>`;
+                    else tagsHtml += `<span class="tag-badge border border-white/20 text-gray-400 mr-1">${tag}</span>`;
+                });
+            }
+
+            const card = document.createElement('div');
+            card.className = "glass-panel p-5 rounded-xl hover:border-purple-500/40 transition flex flex-col";
+            card.innerHTML = `
+                <div class="flex items-start justify-between mb-3">
+                    <div class="p-3 bg-zinc-800/50 rounded-lg">
+                        <i data-lucide="${pkg.icon}" class="w-6 h-6 text-purple-400"></i>
+                    </div>
+                    <button onclick="openDetails('${pkg.id}')" class="text-gray-500 hover:text-white transition">
+                        <i data-lucide="eye" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                <div class="mb-2">${tagsHtml}</div>
+                <h3 class="font-bold text-lg mb-1 text-gray-200">${pkg.name}</h3>
+                <p class="text-sm text-gray-400 mb-4 h-10 line-clamp-2">${pkg.shortDesc}</p>
+                <button onclick="toggleInstall('${pkg.id}')" 
+                    class="mt-auto w-full py-2 rounded-lg font-bold text-sm transition flex items-center justify-center gap-2 ${isInstalled ? 'bg-red-900/20 text-red-400 border border-red-500/20 hover:bg-red-900/40' : 'bg-gray-100 text-black hover:bg-purple-200'}">
+                    ${isInstalled ? 'Uninstall' : 'Install'}
+                </button>
+            `;
+            container.appendChild(card);
+        });
+        lucide.createIcons();
+    }
+
+    // --- 5. NYLON TOOL LOGIC ---
+
+    function launchNylon() {
+      document.getElementById('nav-matrix').classList.remove('hidden');
+      document.getElementById('matrix-app-title').innerText = `Running: Nylon Avatar Tool`;
+      document.getElementById('matrix-container').innerHTML = nylonAppHtml;
+
+      showPage('matrix');
+      initNylonTool();
+
+    
+      initProxyUI();
+
+      lucide.createIcons();
+    }
+
+
+    function initNylonTool() {
+        // Load Tokens
+        const token = localStorage.getItem('nylon_token') || '';
+        const bearer = localStorage.getItem('nylon_bearer') || '';
+
+        document.getElementById('input-bitmoji-token').value = token;
+        document.getElementById('input-bearer-token').value = bearer;
+
+        // Immediately try to fetch real data if tokens exist
+        if (token || bearer) {
+            fetchAvatarData(); 
+        } else {
+            // Fallback to local defaults only if no auth exists
+            nylonCurrentData = JSON.parse(localStorage.getItem('nylon_current_data') || JSON.stringify(defaultNylonData));
+            if(!nylonCurrentData.option_ids) nylonCurrentData.option_ids = {};
+            renderNylonAttributes(nylonCurrentData.option_ids);
+            updateAvatarPreview();
+
+            document.getElementById('nylon-status-log').innerText = "No tokens found. Loaded defaults. Please enter token.";
+        }
+
+        function initProxyUI() {
+          const cfg =
+            JSON.parse(localStorage.getItem('nylon_proxy_config')) || {
+              enabled: false,
+              disableLocal: false,
+              type: 'nylon',
+              custom: []
+            };
+
+          window.nylonProxyConfig = cfg;
+
+          document.getElementById('proxy-enabled').checked = cfg.enabled;
+          document.getElementById('proxy-disable-local').checked = cfg.disableLocal;
+          document.getElementById('proxy-type').value = cfg.type;
+
+          onProxyTypeChange();
+        }
+
+    }
+
+    function updateAvatarPreview() {
+        const previewImg = document.getElementById('nylon-preview-img') || document.getElementById('nylon-avatar-preview');
+        if (!previewImg) return;
+
+        const gender = nylonCurrentData.gender || 1;
+        const style = nylonCurrentData.style || 5;
+
+        let params = new URLSearchParams();
+        params.append('scale', '2');
+        params.append('gender', gender);
+        params.append('style', style);
+        params.append('rotation', '0');
+
+        // Excluded parameters that break the image
+        const excludedParams = ['earring', 'outfit', 'blush_tone', 'eyeshadow_tone', 'ua'];
+
+        if (nylonCurrentData.option_ids) {
+            Object.entries(nylonCurrentData.option_ids).forEach(([key, val]) => {
+                // Skip excluded parameters
+                if (excludedParams.includes(key)) return;
+
+                const v = parseInt(val);
+                // Include all valid numbers including -1, but exclude 0 for tone parameters
+                if (!isNaN(v)) {
+                    // For tone parameters, skip if 0
+                    if (key.includes('_tone') && v === 0) return;
+
+                    params.append(key, v);
+                }
+            });
+        }
+
+        // Always add ua=2 at the end
+        params.append('ua', '2');
+
+        const finalUrl = `https://preview.bitmoji.com/bm-preview/v3/avatar/body?${params.toString()}`;
+        console.log("Previewing URL:", finalUrl);
+        previewImg.src = finalUrl;
+    }
+
+    
+
+    function renderNylonAttributes(optionIds) {
+        const grid = document.getElementById('nylon-attributes-grid');
+        grid.innerHTML = '';
+        
+        const entries = Object.entries(optionIds);
+        // Sort optional: hat first
+        const hatIndex = entries.findIndex(e => e[0] === 'hat');
+        if (hatIndex > -1) {
+            const hatEntry = entries.splice(hatIndex, 1)[0];
+            entries.unshift(hatEntry);
+        }
+
+        entries.forEach(([key, value]) => {
+            const div = document.createElement('div');
+            const isHat = key === 'hat';
+            const borderColor = isHat ? 'border-purple-500' : 'border-white/5';
+            const bgClass = isHat ? 'bg-purple-900/10' : 'bg-black';
+            
+            div.innerHTML = `
+                <label class="block text-[10px] text-gray-500 mb-1 uppercase ${isHat ? 'font-bold text-purple-300' : ''}">${key}</label>
+                <input type="number" id="nylon-attr-${key}" value="${value}" class="w-full ${bgClass} border ${borderColor} rounded px-2 py-1 text-xs text-gray-300 focus:border-purple-500 outline-none" onchange="localUpdateAttr('${key}', this.value)">
+            `;
+            grid.appendChild(div);
+        });
+    }
+    
+    function localUpdateAttr(key, value) {
+        if(!nylonCurrentData.option_ids) nylonCurrentData.option_ids = {};
+        nylonCurrentData.option_ids[key] = parseInt(value);
+        localStorage.setItem('nylon_current_data', JSON.stringify(nylonCurrentData));
+        updateAvatarPreview();
+    }
+
+    function switchNylonTab(tab) {
+      ['token', 'bearer', 'proxy'].forEach(t => {
+        const content = document.getElementById(`tab-content-${t}`);
+        const btn = document.getElementById(`tab-btn-${t}`);
+
+        if (content) {
+          content.classList.toggle('hidden', t !== tab);
+        }
+
+        if (btn) {
+          btn.className =
+            t === tab
+              ? "text-sm font-bold text-white border-b-2 border-purple-500 pb-1"
+              : "text-sm font-bold text-gray-500 hover:text-white pb-1";
+        }
+      });
+    }
+
+
+
+    function saveNylonAuth() {
+        const token = document.getElementById('input-bitmoji-token').value;
+        const bearer = document.getElementById('input-bearer-token').value;
+
+        localStorage.setItem('nylon_token', token);
+        localStorage.setItem('nylon_bearer', bearer);
+
+        console.log("Auth Saved.");
+    }
+
+    function getNylonHeaders() {
+        const token = document.getElementById('input-bitmoji-token').value;
+        const bearer = document.getElementById('input-bearer-token').value;
+        const activeTab = document.getElementById('tab-content-token').classList.contains('hidden') ? 'bearer' : 'token';
+        const headers = { 'Content-Type': 'application/json' };
+        if (activeTab === 'token') {
+             if(token) headers['Bitmoji-Token'] = token;
+        } else {
+             if(bearer) headers['Authorization'] = `Bearer ${bearer}`;
+        }
+        return headers;
+    }
+
+    async function fetchAvatarData() {
+        const headers = getNylonHeaders();
+        const url = "https://us-east-1-bitmoji.api.snapchat.com/api/avatar-builder-v3/avatar";
+        const log = document.getElementById('nylon-status-log');
+
+        log.innerText = "Fetching avatar data...";
+        log.className = "w-full mt-4 p-2 bg-yellow-900/20 text-yellow-500 rounded text-[10px] font-mono break-all";
+
+        try {
+            const response = await nylonFetch(url, { method: 'GET', headers: headers });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+            const fetchedData = await response.json();
+
+            // 1. Prepare Base from Defaults (to keep all textboxes)
+            const newIds = { ...defaultNylonData.option_ids };
+
+            // 2. Overlay Fetched Data
+            if(fetchedData.option_ids) {
+                // First, set everything in our template to 0 (reset)
+                Object.keys(newIds).forEach(k => newIds[k] = 0);
+
+                // Then fill in what we actually got
+                Object.entries(fetchedData.option_ids).forEach(([k, v]) => {
+                    newIds[k] = v;
+                });
+            }
+
+            // 3. Update State
+            nylonCurrentData = { ...fetchedData, option_ids: newIds };
+
+            // Remove forbidden keys from top-level if they exist in state
+            delete nylonCurrentData.id; 
+            delete nylonCurrentData.avatar_id; 
+            delete nylonCurrentData.avatar_version_uuid;
+
+            localStorage.setItem('nylon_current_data', JSON.stringify(nylonCurrentData));
+
+            log.innerText = "Success. Attributes loaded.";
+            log.className = "w-full mt-4 p-2 bg-green-900/20 text-green-400 rounded text-[10px] font-mono break-all";
+
+            renderNylonAttributes(nylonCurrentData.option_ids);
+            updateAvatarPreview();
+        } catch (error) {
+            console.error(error);
+            log.innerText = `Error: ${error.message} (Check Token/Auth)`;
+            log.className = "w-full mt-4 p-2 bg-red-900/20 text-red-400 rounded text-[10px] font-mono break-all";
+        }
+    }
+
+  
+function findtoken()
+    {
+        window.open("https://github.com/Empeefive/NylonHandler/releases/download/%23data/NylonTokenFinder.1.5.zip");
+       instruct();
+    }
+    function instruct()
+        {
+             window.open("https://raw.githubusercontent.com/Empeefive/NylonHandler/refs/heads/main/howto.nylon");
+        }
+    async function nylonAction(action) {
+        const headers = getNylonHeaders();
+        const url = "https://us-east-1-bitmoji.api.snapchat.com/api/avatar-builder-v3/avatar";
+        const log = document.getElementById('nylon-status-log');
+
+        // 1. Gather clean IDs (SKIP IF 0)
+        const cleanOptionIds = {};
+        document.querySelectorAll('input[id^="nylon-attr-"]').forEach(input => {
+            const key = input.id.replace('nylon-attr-', '');
+            const val = parseInt(input.value);
+            // Rule: No 0s, No lip_tone
+            if (!isNaN(val) && val !== 0 && key !== 'lip_tone') {
+                cleanOptionIds[key] = val;
+            }
+        });
+
+        // 2. Build Payload (No ID or UUID)
+        const payload = {
+            mode: action === 'update' ? 'edit' : action,
+            gender: nylonCurrentData.gender || 1,
+            style: nylonCurrentData.style || 5,
+            option_ids: cleanOptionIds
+        };
+
+        // Update Local State for the UI
+        nylonCurrentData.option_ids = { ...defaultNylonData.option_ids, ...cleanOptionIds };
+        localStorage.setItem('nylon_current_data', JSON.stringify(nylonCurrentData));
+        updateAvatarPreview();
+
+        log.innerText = `Sending ${action}...`;
+
+        try {
+            const response = await nylonFetch(url, { 
+                method: 'POST', 
+                headers: headers,
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) throw new Error(await response.text());
+
+            log.innerText = `Success! Avatar ${action}ed.`;
+            log.className = "w-full mt-4 p-2 bg-green-900/20 text-green-400 rounded text-[10px] font-mono";
+
+            setTimeout(fetchAvatarData, 1000);
+        } catch (error) {
+            log.innerText = `Error: ${error.message}`;
+            log.className = "w-full mt-4 p-2 bg-red-900/20 text-red-400 rounded text-[10px] font-mono break-all";
+        }
+    }
+
+    // --- 6. ID BROWSER LOGIC (UPDATED) ---
+    async function renderIdBrowser() {
+        const container = document.getElementById('id-grid-container');
+        const status = document.getElementById('id-browser-status');
+        const searchInput = document.getElementById('id-browser-search');
+        const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+
+        // 1. DYNAMIC BASE URL: Use the current Avatar's Gender/Style to ensure assets load correctly
+        // If nylonCurrentData isn't loaded yet, fallback to Gender 1 (Male) / Style 5 (Bitmoji Deluxe)
+        const currentGender = (typeof nylonCurrentData !== 'undefined' && nylonCurrentData.gender) ? nylonCurrentData.gender : 1;
+        const currentStyle = (typeof nylonCurrentData !== 'undefined' && nylonCurrentData.style) ? nylonCurrentData.style : 5;
+
+        const baseUrl = `https://preview.bitmoji.com/bm-preview/v3/avatar/body?scale=2&gender=${currentGender}&style=${currentStyle}&rotation=0`;
+
+        // 2. CHECK CACHE OR FETCH
+        let rawData = store.getDbCache();
+
+        if(!rawData) {
+            status.innerHTML = "Fetching ID database from remote...";
+            status.classList.remove('hidden');
+            // Using the massive JSON file reference from the original code
+            const fetchUrl = "https://raw.githubusercontent.com/Empeefive/NylonHandler/refs/heads/main/batch_1_18_26.json";
+
+            try {
+                const response = await fetch(fetchUrl);
+                if(!response.ok) throw new Error("GitHub File Not Found (404)");
+                rawData = await response.json();
+                store.setDbCache(rawData); // Save to local storage
+            } catch(err) {
+                status.innerHTML = `Error: ${err.message}`;
+                status.className = "mb-4 p-3 bg-red-900/20 text-red-300 text-xs rounded border border-red-500/20";
+                return;
+            }
+        }
+
+        container.innerHTML = '';
+
+        // 3. PARSE DATA
+        // The structure usually is traits -> [gender] -> bitstrips -> categories
+        // We try to grab 'male' traits by default as they are often a superset, or check the structure
+        const bitstrips = rawData?.traits?.male?.bitstrips?.categories || rawData?.traits?.female?.bitstrips?.categories;
+
+        if (!bitstrips || !Array.isArray(bitstrips)) {
+             status.innerHTML = "Error: Invalid JSON structure in database.";
+             status.classList.remove('hidden');
+             return;
+        }
+
+        let totalItems = 0;
+        let visibleItems = 0;
+
+        // 4. RENDER LOOP
+        bitstrips.forEach(category => {
+            const catKey = category.key;
+
+            // Search Logic: Does the Category Name match?
+            const categoryMatch = catKey.toLowerCase().includes(searchTerm);
+
+            if(category.options && Array.isArray(category.options)) {
+                category.options.forEach(opt => {
+                    const id = opt.value;
+
+                    // Skip invalid IDs
+                    if(id === -1 || id === "-1") return; 
+
+                    const idString = String(id);
+                    const idMatch = idString.includes(searchTerm);
+
+                    // Filter: If neither category nor ID matches the search, skip
+                    if(searchTerm && !categoryMatch && !idMatch) return;
+
+                    // CONSTRUCT PREVIEW URL
+                    // We append the specific trait ID to the base URL
+                    const previewUrl = `${baseUrl}&${catKey}=${id}`;
+
+                    // CREATE CARD
+                    const card = document.createElement('div');
+                    card.className = "glass-panel p-3 rounded-xl flex flex-col items-center gap-3 animate-in fade-in duration-700";
+
+                    // Image Error Handling: If image fails, replace with text or icon
+                    card.innerHTML = `
+                        <div class="group relative w-20 h-20 bg-zinc-800 rounded-full flex items-center justify-center text-purple-500 overflow-hidden border-2 border-white/5">
+                            <img src="${previewUrl}" 
+                                 class="w-full h-full object-cover" 
+                                 loading="lazy" 
+                                 onerror="this.onerror=null; this.parentElement.innerHTML='<i data-lucide=\\'image-off\\' class=\\'w-6 h-6 text-red-900\\'></i>';">
+
+                            <button onclick="expandImage('${previewUrl}')" class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition text-white">
+                                <i data-lucide="maximize-2" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+
+                        <div class="text-center w-full overflow-hidden">
+                            <div class="text-[10px] uppercase font-bold text-purple-400 mb-1 truncate" title="${catKey}">${catKey}</div>
+                            <div class="text-xs font-mono bg-black/50 rounded py-1 border border-white/5 truncate" title="${id}">${id}</div>
+                        </div>
+
+                        <div class="flex w-full gap-2 mt-auto">
+                            <button onclick="importIdToAvatar('${catKey}', '${id}')" class="flex-1 bg-purple-900/30 hover:bg-purple-600 border border-purple-500/30 text-[10px] py-1 rounded text-purple-300 hover:text-white transition font-bold">Import</button>
+                            <button onclick="navigator.clipboard.writeText('${id}')" class="bg-zinc-800 hover:bg-white/10 px-2 rounded text-gray-400" title="Copy ID"><i data-lucide="copy" class="w-3 h-3"></i></button>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                    visibleItems++;
+                });
+            }
+        });
+
+        // 5. UPDATE STATUS BAR
+        status.innerHTML = `Showing ${visibleItems} items (Source: ${store.getDbCache() ? 'Local Cache' : 'Network'}).`;
+        status.className = "mb-4 p-3 bg-green-900/20 text-green-300 text-xs rounded border border-green-500/20";
+        if(visibleItems === 0) {
+            status.innerHTML = "No items found matching your search.";
+            status.className = "mb-4 p-3 bg-yellow-900/20 text-yellow-300 text-xs rounded border border-yellow-500/20";
+        }
+        status.classList.remove('hidden');
+
+        // Refresh Icons
+        if(window.lucide) lucide.createIcons();
+    }
+
+    function refreshIdDb() {
+        localStorage.removeItem('nexus_id_db');
+        renderIdBrowser();
+    }
+
+    function expandImage(url) {
+        document.getElementById('expanded-image').src = url;
+        document.getElementById('image-modal').classList.remove('hidden');
+    }
+
+    function importIdToAvatar(type, id) {
+        // Update Data Immediately
+        if(!nylonCurrentData.option_ids) nylonCurrentData.option_ids = {};
+        nylonCurrentData.option_ids[type] = parseInt(id);
+        
+        // Save to Local Storage
+        localStorage.setItem('nylon_current_data', JSON.stringify(nylonCurrentData));
+
+        // Switch View
+        launchNylon();
+        
+        // Visual Feedback & UI Sync
+        setTimeout(() => {
+            const input = document.getElementById(`nylon-attr-${type}`);
+            if(input) {
+                input.value = id;
+                input.focus();
+                input.classList.remove('bg-black', 'bg-purple-900/10');
+                input.classList.add('bg-green-900/50');
+                setTimeout(() => {
+                    input.classList.remove('bg-green-900/50');
+                    if(type === 'hat') input.classList.add('bg-purple-900/10');
+                    else input.classList.add('bg-black');
+                }, 500);
+            }
+            updateAvatarPreview();
+        }, 200);
+    }
+
+
+    // --- 7. YAB ENCRYPTER LOGIC ---
+    function renderYabEncrypter() {
+        return `
+        <div class="h-full flex flex-col p-6 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
+                <div class="flex flex-col gap-2">
+                    <label class="text-xs font-mono text-gray-500 uppercase">Input Text</label>
+                    <textarea id="yab-input" class="flex-1 bg-black/50 border border-white/10 rounded-xl p-4 font-mono text-sm outline-none focus:border-purple-500 resize-none text-gray-300" placeholder="Enter text to encrypt/decrypt..."></textarea>
+                </div>
+
+                <div class="flex flex-col gap-4">
+                     <label class="text-xs font-mono text-gray-500 uppercase">Algorithm Selection</label>
+                     <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 h-1/3 overflow-y-auto pr-1" id="yab-methods-grid">
+                        </div>
+                     
+                     <label class="text-xs font-mono text-gray-500 uppercase mt-2">Output Result</label>
+                     <textarea id="yab-output" readonly class="flex-1 bg-[#050505] border border-green-900/30 text-green-400 rounded-xl p-4 font-mono text-sm outline-none resize-none"></textarea>
+                </div>
+            </div>
+        </div>
+        `;
+    }
+
+    function initBitmojiLab() {
+        lucide.createIcons();
+        bmLoadHistory();
+    }
+
+
+    
+    
+    function renderBitmojiLab() {
+        return `
+        <style>
+            /* Bitmoji Lab Scoped Styles */
+            #bm-container .ref-row { display: flex; justify-content: space-between; padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; transition: background 0.2s; }
+            #bm-container .ref-row:hover { background: rgba(168, 85, 247, 0.2); }
+            #bm-container .ref-name { font-size: 11px; color: #ccc; }
+            #bm-container .ref-id { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #a855f7; }
+
+            #bm-container details > summary { list-style: none; cursor: pointer; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 6px; font-weight: 600; font-size: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; border: 1px solid transparent; transition: all 0.2s; }
+            #bm-container details > summary:hover { border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); }
+            #bm-container details[open] > summary { background: rgba(168, 85, 247, 0.1); color: #a855f7; border-color: rgba(168, 85, 247, 0.2); }
+            #bm-container details > div { padding: 4px 0 12px 0; }
+
+            #bm-container .bm-image-card { transition: transform 0.2s; background: #111; border: 1px solid rgba(255,255,255,0.05); }
+            #bm-container .bm-image-card:hover { transform: translateY(-4px); border-color: #a855f7; }
+        </style>
+
+        <div id="bm-container" class="flex h-full w-full absolute inset-0">
+            <aside class="w-64 glass-panel flex flex-col h-full z-20 shrink-0">
+                <div class="p-5 border-b border-white/10 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="zap" class="text-purple-500 fill-purple-500" size="20"></i>
+                        <span class="font-bold tracking-tight text-white text-sm">BITMOJI LAB</span>
+                    </div>
+                </div>
+
+                <div class="p-3 flex gap-2">
+                    <button onclick="bmResetUI()" class="flex-1 py-2 bg-purple-600 hover:bg-purple-700 rounded-md text-[10px] font-bold transition flex items-center justify-center gap-2 text-white">
+                        <i data-lucide="plus" size="12"></i> NEW SCAN
+                    </button>
+                    <button onclick="bmOpenAgeModal()" id="bm-age-gate-btn" class="px-3 py-2 bg-red-900/20 border border-red-500/30 text-red-400 rounded-md text-[10px] font-bold whitespace-nowrap transition-colors">
+                        18+ OFF
+                    </button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto" id="bm-saved-batches">
+                    <div class="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest">History</div>
+                    <div id="bm-saved-list-content"></div>
+                </div>
+            </aside>
+
+            <main class="flex-1 flex flex-col overflow-hidden relative bg-[#050505]">
+
+                <header class="glass-panel p-4 flex flex-wrap items-center gap-4 border-b border-white/5 z-10">
+                    <div class="flex flex-col">
+                        <label class="text-[9px] text-gray-500 uppercase font-bold mb-1">Target Param</label>
+                        <select id="bm-category" class="bg-black border border-white/10 rounded px-2 py-1.5 text-xs font-mono text-purple-300 focus:border-purple-500 outline-none w-28">
+                            <option value="outfit">outfit</option>
+                            <option value="top">top</option>
+                            <option value="bottom">bottom</option>
+                            <option value="outerwear">outerwear</option>
+                            <option value="footwear">footwear</option>
+                            <option value="hat">hat</option>
+                            <option value="glasses">glasses</option>
+                        </select>
+                    </div>
+
+                    <div class="flex flex-col">
+                        <label class="text-[9px] text-gray-500 uppercase font-bold mb-1">ID Range</label>
+                        <div class="flex items-center gap-2">
+                            <input id="bm-start-num" type="number" value="10001000" class="w-24 bg-black border border-white/10 rounded px-2 py-1.5 text-xs font-mono focus:border-purple-500 outline-none placeholder-gray-700">
+                            <span class="text-gray-600">-</span>
+                            <input id="bm-end-num" type="number" value="10001050" class="w-24 bg-black border border-white/10 rounded px-2 py-1.5 text-xs font-mono focus:border-purple-500 outline-none placeholder-gray-700">
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col">
+                        <label class="text-[9px] text-gray-500 uppercase font-bold mb-1">Batch</label>
+                        <input id="bm-batch-size" type="number" value="10" class="w-12 bg-black border border-white/10 rounded px-2 py-1.5 text-xs font-mono text-center">
+                    </div>
+
+                    <div class="flex items-end gap-2 h-full pb-[1px]">
+                        <button id="bm-run-btn" onclick="bmStartScrape()" class="bg-white text-black px-5 py-1.5 rounded h-[30px] font-bold text-xs hover:bg-purple-400 transition flex items-center gap-2">
+                            <i data-lucide="play" size="12"></i> RUN
+                        </button>
+                        <button id="bm-stop-btn" onclick="bmStopScrape()" class="hidden bg-red-600 text-white px-5 py-1.5 rounded h-[30px] font-bold text-xs hover:bg-red-700 transition flex items-center gap-2">
+                            <i data-lucide="square" size="12"></i> STOP
+                        </button>
+                    </div>
+
+                    <div class="ml-auto flex items-center gap-3">
+                        <div id="bm-status-badge" class="hidden md:block px-3 py-1 rounded-full bg-purple-500/5 border border-purple-500/20 text-[9px] font-mono text-purple-400">READY</div>
+                        <button onclick="bmToggleInfo()" class="flex items-center gap-2 px-3 py-1.5 bg-purple-900/20 border border-purple-500/30 rounded hover:bg-purple-900/40 transition text-xs text-purple-300">
+                            <i data-lucide="book" size="14"></i> Library
+                        </button>
+                        <div class="h-6 w-px bg-white/10 mx-1"></div>
+                        <button onclick="bmDiscardCurrent()" class="p-1.5 text-gray-400 hover:text-red-500 transition hover:bg-white/5 rounded" title="Discard">
+                            <i data-lucide="trash-2" size="16"></i>
+                        </button>
+                        <button onclick="bmOpenSaveModal()" class="p-1.5 text-gray-400 hover:text-white transition hover:bg-white/5 rounded" title="Save">
+                            <i data-lucide="save" size="16"></i>
+                        </button>
+                    </div>
+                </header>
+
+                <div id="bm-grid-container" class="flex-1 overflow-y-auto p-6 scroll-smooth">
+                    <div id="bm-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10 gap-4"></div>
+                </div>
+
+                <div id="bm-info-panel" class="absolute right-0 top-0 bottom-0 w-[420px] glass-panel translate-x-full transition-transform duration-300 z-30 flex flex-col shadow-2xl bg-[#080808] border-l border-white/10">
+                    <div class="p-4 border-b border-white/10 flex justify-between items-center bg-[#0f0f0f]">
+                        <h2 class="font-bold text-sm flex items-center gap-2 text-white">
+                            <i data-lucide="library" size="16" class="text-purple-500"></i> ID Library
+                        </h2>
+                        <button onclick="bmToggleInfo()" class="p-1 hover:bg-white/10 rounded text-gray-400"><i data-lucide="x" size="18"></i></button>
+                    </div>
+
+                    <div class="flex-1 overflow-y-auto p-4 space-y-2">
+                        <div class="text-[10px] text-gray-500 mb-2 uppercase font-bold tracking-wider">Click row to preview</div>
+
+                        <details open>
+                              <summary><span>👕 Outfits</span> <i data-lucide="chevron-down" size="14"></i></summary>
+                    <div>
+                        <div onclick="bmPreviewRef(3000012, 'outfit')" class="ref-row"><span class="ref-name">Angel Outfit</span><span class="ref-id">3000012</span></div>
+                        <div onclick="bmPreviewRef(1018137, 'outfit')" class="ref-row"><span class="ref-name">Cop Outfit</span><span class="ref-id">1018137</span></div>
+                        <div onclick="bmPreviewRef(1010234, 'outfit')" class="ref-row"><span class="ref-name">Dragon Outfit</span><span class="ref-id">1010234</span></div>
+                        <div onclick="bmPreviewRef(927624, 'outfit')" class="ref-row"><span class="ref-name">Elf Outfit</span><span class="ref-id">927624</span></div>
+                        <div onclick="bmPreviewRef(927625, 'outfit')" class="ref-row"><span class="ref-name">Festival Tree</span><span class="ref-id">927625</span></div>
+                        <div onclick="bmPreviewRef(1018136, 'outfit')" class="ref-row"><span class="ref-name">Firefighter</span><span class="ref-id">1018136</span></div>
+                        <div onclick="bmPreviewRef(1018794, 'outfit')" class="ref-row"><span class="ref-name">Robot Outfit</span><span class="ref-id">1018794</span></div>
+                        <div onclick="bmPreviewRef(927623, 'outfit')" class="ref-row"><span class="ref-name">Santa Claus</span><span class="ref-id">927623</span></div>
+                        <div onclick="bmPreviewRef(3000008, 'outfit')" class="ref-row"><span class="ref-name">Skeleton Devil</span><span class="ref-id">3000008</span></div>
+                        <div onclick="bmPreviewRef(1018066, 'outfit')" class="ref-row"><span class="ref-name">Snowman</span><span class="ref-id">1018066</span></div>
+                    </div>
+                </details>
+
+                <details>
+                    <summary><span>🕶️ Glasses</span> <i data-lucide="chevron-down" size="14"></i></summary>
+                    <div>
+                        <div onclick="bmPreviewRef(10082439, 'glasses')" class="ref-row"><span class="ref-name">Yellow Wraparound</span><span class="ref-id">10082439</span></div>
+                        <div onclick="bmPreviewRef(10082440, 'glasses')" class="ref-row"><span class="ref-name">Blue Wraparound</span><span class="ref-id">10082440</span></div>
+                        <div onclick="bmPreviewRef(10082441, 'glasses')" class="ref-row"><span class="ref-name">Red Wraparound</span><span class="ref-id">10082441</span></div>
+                        <div onclick="bmPreviewRef(10082442, 'glasses')" class="ref-row"><span class="ref-name">Silver Wraparound</span><span class="ref-id">10082442</span></div>
+                        <div onclick="bmPreviewRef(10084130, 'glasses')" class="ref-row"><span class="ref-name">SpongeBob Sassy Pink</span><span class="ref-id">10084130</span></div>
+                        <div onclick="bmPreviewRef(10002442, 'glasses')" class="ref-row"><span class="ref-name">Medusa Biggie</span><span class="ref-id">10002442</span></div>
+                        <div onclick="bmPreviewRef(10002440, 'glasses')" class="ref-row"><span class="ref-name">Medusa Chrome</span><span class="ref-id">10002440</span></div>
+                    </div>
+                </details>
+
+                <details>
+                    <summary><span>🎩 Hats</span> <i data-lucide="chevron-down" size="14"></i></summary>
+                    <div>
+                        <div onclick="bmPreviewRef(10084128, 'hat')" class="ref-row"><span class="ref-name">SpongeBob Pineapple</span><span class="ref-id">10084128</span></div>
+                        <div onclick="bmPreviewRef(10084129, 'hat')" class="ref-row"><span class="ref-name">Goofy Goober</span><span class="ref-id">10084129</span></div>
+                        <div onclick="bmPreviewRef(10088905, 'hat')" class="ref-row"><span class="ref-name">Gary Hat</span><span class="ref-id">10088905</span></div>
+                    </div>
+                </details>
+
+                <details>
+                    <summary><span>🔥 Versace Tops (Shirts)</span> <i data-lucide="chevron-down" size="14"></i></summary>
+                    <div>
+                        <div onclick="bmPreviewRef(10002403, 'top')" class="ref-row"><span class="ref-name">Barocco Silk Shirt</span><span class="ref-id">10002403</span></div>
+                        <div onclick="bmPreviewRef(10002400, 'top')" class="ref-row"><span class="ref-name">Barocco Jacquard Crop</span><span class="ref-id">10002400</span></div>
+                        <div onclick="bmPreviewRef(10002404, 'top')" class="ref-row"><span class="ref-name">Barocco Silk 5.00</span><span class="ref-id">10002404</span></div>
+                        <div onclick="bmPreviewRef(10043473, 'top')" class="ref-row"><span class="ref-name">Logo Ribbed Tank</span><span class="ref-id">10043473</span></div>
+                        <div onclick="bmPreviewRef(10002402, 'top')" class="ref-row"><span class="ref-name">Cashmere-Blend Zip</span><span class="ref-id">10002402</span></div>
+                        <div onclick="bmPreviewRef(10043479, 'top')" class="ref-row"><span class="ref-name">Embroidered Logo Tee</span><span class="ref-id">10043479</span></div>
+                        <div onclick="bmPreviewRef(10043483, 'top')" class="ref-row"><span class="ref-name">1978 Re-Edition Logo</span><span class="ref-id">10043483</span></div>
+                        <div onclick="bmPreviewRef(10043470, 'top')" class="ref-row"><span class="ref-name">Logo Ribbed Tank (2)</span><span class="ref-id">10043470</span></div>
+                        <div onclick="bmPreviewRef(10002401, 'top')" class="ref-row"><span class="ref-name">Crystal 1978 Logo</span><span class="ref-id">10002401</span></div>
+                        <div onclick="bmPreviewRef(10002437, 'outfit')" class="ref-row"><span class="ref-name">Medusa '95 Mini Dress</span><span class="ref-id">10002437</span></div>
+                        <div onclick="bmPreviewRef(10002438, 'outfit')" class="ref-row"><span class="ref-name">Medusa '95 Chemisier</span><span class="ref-id">10002438</span></div>
+                    </div>
+                </details>
+
+                <details>
+                    <summary><span>🧥 Versace Outerwear</span> <i data-lucide="chevron-down" size="14"></i></summary>
+                    <div>
+                        <div onclick="bmPreviewRef(10002417, 'outerwear')" class="ref-row"><span class="ref-name">Blouson Denim Jacket</span><span class="ref-id">10002417</span></div>
+                        <div onclick="bmPreviewRef(10002422, 'outerwear')" class="ref-row"><span class="ref-name">Denim Jacket</span><span class="ref-id">10002422</span></div>
+                        <div onclick="bmPreviewRef(10002421, 'outerwear')" class="ref-row"><span class="ref-name">Denim Jacket WHITE/GOLD</span><span class="ref-id">10002421</span></div>
+                        <div onclick="bmPreviewRef(10002419, 'outerwear')" class="ref-row"><span class="ref-name">Barocco Jacquard Over</span><span class="ref-id">10002419</span></div>
+                        <div onclick="bmPreviewRef(10002418, 'outerwear')" class="ref-row"><span class="ref-name">Denim Overshirt</span><span class="ref-id">10002418</span></div>
+                        <div onclick="bmPreviewRef(10002413, 'outerwear')" class="ref-row"><span class="ref-name">Gabardine Wool Over</span><span class="ref-id">10002413</span></div>
+                        <div onclick="bmPreviewRef(10002415, 'outerwear')" class="ref-row"><span class="ref-name">Gabardine Trench</span><span class="ref-id">10002415</span></div>
+                        <div onclick="bmPreviewRef(10002414, 'outerwear')" class="ref-row"><span class="ref-name">Wool Double-Breasted</span><span class="ref-id">10002414</span></div>
+                        <div onclick="bmPreviewRef(10002420, 'outerwear')" class="ref-row"><span class="ref-name">Leather Cardigan</span><span class="ref-id">10002420</span></div>
+                        <div onclick="bmPreviewRef(10002416, 'outerwear')" class="ref-row"><span class="ref-name">Leather Biker Jacket</span><span class="ref-id">10002416</span></div>
+                    </div>
+                </details>
+
+                <details>
+                    <summary><span>👖 Versace Bottoms</span> <i data-lucide="chevron-down" size="14"></i></summary>
+                    <div>
+                        <div onclick="bmPreviewRef(10002406, 'bottom')" class="ref-row"><span class="ref-name">Medusa '95 Jeans</span><span class="ref-id">10002406</span></div>
+                        <div onclick="bmPreviewRef(10002411, 'bottom')" class="ref-row"><span class="ref-name">Wool Twill Formal</span><span class="ref-id">10002411</span></div>
+                        <div onclick="bmPreviewRef(10002409, 'bottom')" class="ref-row"><span class="ref-name">Regular Fit Jeans</span><span class="ref-id">10002409</span></div>
+                        <div onclick="bmPreviewRef(10002405, 'bottom')" class="ref-row"><span class="ref-name">Medusa '95 Jeans WHT</span><span class="ref-id">10002405</span></div>
+                        <div onclick="bmPreviewRef(10002408, 'bottom')" class="ref-row"><span class="ref-name">Regular Fit Jeans [2]</span><span class="ref-id">10002408</span></div>
+                        <div onclick="bmPreviewRef(10002407, 'bottom')" class="ref-row"><span class="ref-name">Medusa '95 Boyfriend</span><span class="ref-id">10002407</span></div>
+                        <div onclick="bmPreviewRef(10002412, 'bottom')" class="ref-row"><span class="ref-name">Leather Mini Skirt</span><span class="ref-id">10002412</span></div>
+                        <div onclick="bmPreviewRef(10002410, 'bottom')" class="ref-row"><span class="ref-name">Slim Fit Jeans</span><span class="ref-id">10002410</span></div>
+                    </div>
+                </details>
+
+                 <details>
+                    <summary><span>👟 Versace Footwear</span> <i data-lucide="chevron-down" size="14"></i></summary>
+                    <div>
+                        <div onclick="bmPreviewRef(10002426, 'footwear')" class="ref-row"><span class="ref-name">Medusa '95 Lace Boots</span><span class="ref-id">10002426</span></div>
+                        <div onclick="bmPreviewRef(10002425, 'footwear')" class="ref-row"><span class="ref-name">Medusa '95 Loafers</span><span class="ref-id">10002425</span></div>
+                        <div onclick="bmPreviewRef(10002423, 'footwear')" class="ref-row"><span class="ref-name">Medusa '95 Loafers BLK</span><span class="ref-id">10002423</span></div>
+                        <div onclick="bmPreviewRef(10002432, 'footwear')" class="ref-row"><span class="ref-name">Gianni Ribbon Open</span><span class="ref-id">10002432</span></div>
+                        <div onclick="bmPreviewRef(10002431, 'footwear')" class="ref-row"><span class="ref-name">Gianni Ribbon BLK</span><span class="ref-id">10002431</span></div>
+                        <div onclick="bmPreviewRef(10002433, 'footwear')" class="ref-row"><span class="ref-name">Gianni Ribbon WHT</span><span class="ref-id">10002433</span></div>
+                        <div onclick="bmPreviewRef(10002434, 'footwear')" class="ref-row"><span class="ref-name">Gianni Ribbon PINK</span><span class="ref-id">10002434</span></div>
+                        <div onclick="bmPreviewRef(10002435, 'footwear')" class="ref-row"><span class="ref-name">Mercury Sneaker</span><span class="ref-id">10002435</span></div>
+                        <div onclick="bmPreviewRef(10002436, 'footwear')" class="ref-row"><span class="ref-name">Mercury Sneaker BLK</span><span class="ref-id">10002436</span></div>
+                    </div>
+                </details>
+
+                <details>
+                    <summary><span>👁️ Eye Colors (Pupil Tone)</span> <i data-lucide="chevron-down" size="14"></i></summary>
+                    <div class="grid grid-cols-2 gap-1 px-1">
+                        <div onclick="previewRef(1000001, 'pupil_tone')" class="ref-row text-[9px]"><span class="ref-name">Bright Red</span><span class="ref-id">1000001</span></div>
+                        <div onclick="bmPreviewRef(1000002, 'pupil_tone')" class="ref-row text-[9px]"><span class="ref-name">Bright Orange</span><span class="ref-id">1000002</span></div>
+                        <div onclick="bmPreviewRef(1000003, 'pupil_tone')" class="ref-row text-[9px]"><span class="ref-name">Bright Yellow</span><span class="ref-id">1000003</span></div>
+                        <div onclick="bmPreviewRef(1000004, 'pupil_tone')" class="ref-row text-[9px]"><span class="ref-name">Bright Green</span><span class="ref-id">1000004</span></div>
+                        <div onclick="bmPreviewRef(1000005, 'pupil_tone')" class="ref-row text-[9px]"><span class="ref-name">Bright Blue</span><span class="ref-id">1000005</span></div>
+                        <div onclick="bmPreviewRef(1000006, 'pupil_tone')" class="ref-row text-[9px]"><span class="ref-name">Bright Indigo</span><span class="ref-id">1000006</span></div>
+                        <div onclick="bmPreviewRef(1000007, 'pupil_tone')" class="ref-row text-[9px]"><span class="ref-name">Bright Violet</span><span class="ref-id">1000007</span></div>
+                        <div onclick="bmPreviewRef(4249207, 'pupil_tone')" class="ref-row text-[9px]"><span class="ref-name">Violet</span><span class="ref-id">4249207</span></div>
+                        <div onclick="bmPreviewRef(6186500, 'pupil_tone')" class="ref-row text-[9px]"><span class="ref-name">Lime Green</span><span class="ref-id">6186500</span></div>
+                        <div onclick="bmPreviewRef(7464883, 'pupil_tone')" class="ref-row text-[9px]"><span class="ref-name">Deep Blue</span><span class="ref-id">7464883</span></div>
+                        <div onclick="bmPreviewRef(4133603, 'pupil_tone')" class="ref-row text-[9px]"><span class="ref-name">Cyan</span><span class="ref-id">4133603</span></div>
+                        <div onclick="bmPreviewRef(7373719, 'pupil_tone')" class="ref-row text-[9px]"><span class="ref-name">Forest Green</span><span class="ref-id">7373719</span></div>
+                        <div onclick="bmPreviewRef(8330879, 'pupil_tone')" class="ref-row text-[9px]"><span class="ref-name">Pale Teal</span><span class="ref-id">8330879</span></div>
+                        <div onclick="bmPreviewRef(6112463, 'pupil_tone')" class="ref-row text-[9px]"><span class="ref-name">Magenta</span><span class="ref-id">6112463</span></div>
+                        <div onclick="bmPreviewRef(6797183, 'pupil_tone')" class="ref-row text-[9px]"><span class="ref-name">Neon Green</span><span class="ref-id">6797183</span></div>
+                        <div onclick="bmPreviewRef(9668908, 'pupil_tone')" class="ref-row text-[9px]"><span class="ref-name">Light Mint</span><span class="ref-id">9668908</span></div>
+                        <div onclick="bmPreviewRef(3576857, 'pupil_tone')" class="ref-row text-[9px]"><span class="ref-name">Royal Purple</span><span class="ref-id">3576857</span></div>
+                        <div onclick="bmPreviewRef(9395874, 'pupil_tone')" class="ref-row text-[9px]"><span class="ref-name">Rose Pink</span><span class="ref-id">9395874</span></div>
+                        <div onclick="bmPreviewRef(9279041, 'pupil_tone')" class="ref-row text-[9px]"><span class="ref-name">Sky Blue</span><span class="ref-id">9279041</span></div>
+                        <div onclick="bmPreviewRef(3303372, 'pupil_tone')" class="ref-row text-[9px]"><span class="ref-name">Warm Brown</span><span class="ref-id">3303372</span></div>
+                        <div onclick="bmPreviewRef(4751356, 'pupil_tone')" class="ref-row text-[9px]"><span class="ref-name">Lavender</span><span class="ref-id">4751356</span></div>
+                        <div onclick="bmPreviewRef(5386881, 'pupil_tone')" class="ref-row text-[9px]"><span class="ref-name">Steel Blue</span><span class="ref-id">5386881</span></div>
+                        <div onclick="bmPreviewRef(2308830, 'pupil_tone')" class="ref-row text-[9px]"><span class="ref-name">Dark Brown</span><span class="ref-id">2308830</span></div>
+                        <div onclick="bmPreviewRef(1791523, 'pupil_tone')" class="ref-row text-[9px]"><span class="ref-name">Pale Yellow</span><span class="ref-id">1791523</span></div>
+                        <div onclick="bmPreviewRef(5570964, 'pupil_tone')" class="ref-row text-[9px]"><span class="ref-name">Soft Green</span><span class="ref-id">5570964</span></div>
+                        <div onclick="bmPreviewRef(4567321, 'pupil_tone')" class="ref-row text-[9px]"><span class="ref-name">Orchid Purple</span><span class="ref-id">4567321</span></div>
+                        <div onclick="bmPreviewRef(7337688, 'pupil_tone')" class="ref-row text-[9px]"><span class="ref-name">Sage Green</span><span class="ref-id">7337688</span></div>
+                        <div onclick="bmPreviewRef(2821380, 'pupil_tone')" class="ref-row text-[9px]"><span class="ref-name">Pastel Lime</span><span class="ref-id">2821380</span></div>
+                        <div onclick="bmPreviewRef(9363909, 'pupil_tone')" class="ref-row text-[9px]"><span class="ref-name">Hot Pink</span><span class="ref-id">9363909</span></div>
+                        <div onclick="bmPreviewRef(4119779, 'pupil_tone')" class="ref-row text-[9px]"><span class="ref-name">Indigo</span><span class="ref-id">4119779</span></div>
+                        <div onclick="bmPreviewRef(5691010, 'pupil_tone')" class="ref-row text-[9px]"><span class="ref-name">Bubblegum</span><span class="ref-id">5691010</span></div>
+                        <div onclick="bmPreviewRef(7229658, 'pupil_tone')" class="ref-row text-[9px]"><span class="ref-name">Olive Green</span><span class="ref-id">7229658</span></div>
+                        <div onclick="bmPreviewRef(5859621, 'pupil_tone')" class="ref-row text-[9px]"><span class="ref-name">Aqua Blue</span><span class="ref-id">5859621</span></div>
+                        <div onclick="bmPreviewRef(9995152, 'pupil_tone')" class="ref-row text-[9px]"><span class="ref-name">Peach</span><span class="ref-id">9995152</span></div>
+                        <div onclick="bmPreviewRef(3690901, 'pupil_tone')" class="ref-row text-[9px]"><span class="ref-name">Electric Blue</span><span class="ref-id">3690901</span></div>
+                        <div onclick="bmPreviewRef(8695784, 'pupil_tone')" class="ref-row text-[9px]"><span class="ref-name">Chartreuse</span><span class="ref-id">8695784</span></div>
+                        <div onclick="bmPreviewRef(1255650, 'pupil_tone')" class="ref-row text-[9px]"><span class="ref-name">Emerald Green</span><span class="ref-id">1255650</span></div>
+                    </div>
+                </details>
+
+
+                <div id="restricted-section" class="border border-red-900/50 bg-red-950/10 rounded-lg overflow-hidden mt-6">
+                    <div class="p-3 bg-red-900/20 text-red-500 font-bold text-xs flex items-center justify-between">
+                        <span class="flex items-center gap-2"><i data-lucide="alert-triangle" size="14"></i> RESTRICTED (18+)</span>
+                        <span class="text-[9px] opacity-70">POSSIBLY BANNABLE</span>
+                    </div>
+                    <div class="nsfw-blur p-2" id="nsfw-list">
+                        <div onclick="bmPreviewRef(10082482, 'top')" class="ref-row border-red-900/20 hover:bg-red-900/20"><span class="ref-name text-red-300">Girl Swimming Pool (Top)</span><span class="ref-id text-red-400">10082482</span></div>
+                        <div onclick="bmPreviewRef(10083135, 'top')" class="ref-row border-red-900/20 hover:bg-red-900/20"><span class="ref-name text-red-300">Girl Bed (Top)</span><span class="ref-id text-red-400">10083135</span></div>
+                        <div onclick="bmPreviewRef(10024694, 'top')" class="ref-row border-red-900/20 hover:bg-red-900/20"><span class="ref-name text-red-300">Close Up Breast (Top)</span><span class="ref-id text-red-400">10024694</span></div>
+                        <div onclick="bmPreviewRef(10082474, 'top')" class="ref-row border-red-900/20 hover:bg-red-900/20"><span class="ref-name text-red-300">Alt Pool (Sweatshirt)</span><span class="ref-id text-red-400">10082474</span></div>
+                        <div onclick="bmPreviewRef(10082537, 'top')" class="ref-row border-red-900/20 hover:bg-red-900/20"><span class="ref-name text-red-300">Alt2 Pool (Sweatshirt)</span><span class="ref-id text-red-400">10082537</span></div>
+                        <div onclick="bmPreviewRef(10084734, 'bottom')" class="ref-row border-red-900/20 hover:bg-red-900/20"><span class="ref-name text-red-300">Black Thong (Pant)</span><span class="ref-id text-red-400">10084734</span></div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </main>
+        </div>
+        `;
+    }
+
+    function initYabEncrypter() {
+        const grid = document.getElementById('yab-methods-grid');
+        const methods = [
+            { name: 'Base64 Encode', fn: (s) => btoa(s) },
+            { name: 'Base64 Decode', fn: (s) => atob(s) },
+            { name: 'Hex Encode', fn: (s) => s.split('').map(c => c.charCodeAt(0).toString(16).padStart(2,'0')).join('') },
+            { name: 'Hex Decode', fn: (s) => s.match(/.{1,2}/g).map(byte => String.fromCharCode(parseInt(byte, 16))).join('') },
+            { name: 'Binary Encode', fn: (s) => s.split('').map(c => c.charCodeAt(0).toString(2).padStart(8,'0')).join(' ') },
+            { name: 'Binary Decode', fn: (s) => s.split(' ').map(b => String.fromCharCode(parseInt(b, 2))).join('') },
+            { name: 'URL Encode', fn: (s) => encodeURIComponent(s) },
+            { name: 'URL Decode', fn: (s) => decodeURIComponent(s) },
+            { name: 'Reverse String', fn: (s) => s.split('').reverse().join('') },
+            { name: 'ROT13', fn: (s) => s.replace(/[a-zA-Z]/g,c=>String.fromCharCode((c<="Z"?90:122)>=(c=c.charCodeAt(0)+13)?c:c-26)) },
+            { name: 'Caesar (+1)', fn: (s) => s.replace(/[a-zA-Z]/g,c=>String.fromCharCode((c<="Z"?90:122)>=(c=c.charCodeAt(0)+1)?c:c-26)) },
+            { name: 'Caesar (-1)', fn: (s) => s.replace(/[a-zA-Z]/g,c=>String.fromCharCode((c<="Z"?90:122)>=(c=c.charCodeAt(0)+25)?c:c-26)) },
+            { name: 'Atbash Cipher', fn: (s) => s.replace(/[a-zA-Z]/g, c => { const base = c <= 'Z' ? 65 : 97; return String.fromCharCode(base + (25 - (c.charCodeAt(0) - base))); }) },
+            { name: 'SHA-256 (Hash)', async: true, fn: async (s) => { const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)); return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join(''); } },
+            { name: 'SHA-512 (Hash)', async: true, fn: async (s) => { const buf = await crypto.subtle.digest('SHA-512', new TextEncoder().encode(s)); return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join(''); } },
+            { name: 'HTML Entities', fn: (s) => s.replace(/[\u00A0-\u9999<>\&]/gim, i => '&#'+i.charCodeAt(0)+';') },
+            { name: 'Morse Code', fn: (s) => { const m={a:".-",b:"-...",c:"-.-.",d:"-..",e:".",f:"..-.",g:"--.",h:"....",i:"..",j:".---",k:"-.-",l:".-..",m:"--",n:"-.",o:"---",p:".--.",q:"--.-",r:".-.",s:"...",t:"-",u:"..-",v:"...-",w:".--",x:"-..-",y:"-.--",z:"--.."," ":"/"}; return s.toLowerCase().split('').map(c=>m[c]||c).join(' '); } },
+            { name: 'Leet Speak', fn: (s) => s.replace(/[aAeEiIoOsStT]/g, c=>{const m={'a':'4','e':'3','i':'1','o':'0','s':'5','t':'7'}; return m[c.toLowerCase()] || c;}) },
+            { name: 'Upper/Lower Swap', fn: (s) => s.split('').map(c => c === c.toUpperCase() ? c.toLowerCase() : c.toUpperCase()).join('') },
+            { name: 'Vigenère (Key: NEXUS)', fn: (s) => { const k="NEXUS"; let r=""; let j=0; for(let i=0;i<s.length;i++){ const c=s.charCodeAt(i); if(65<=c&&c<=90){ r+=String.fromCharCode((c-65+k.charCodeAt(j%5)-65)%26+65); j++; } else if(97<=c&&c<=122){ r+=String.fromCharCode((c-97+k.charCodeAt(j%5)-65)%26+97); j++; } else { r+=s[i]; } } return r; } },
+        ];
+
+        methods.forEach(m => {
+            const btn = document.createElement('button');
+            btn.className = "bg-white/5 hover:bg-purple-900/50 border border-white/5 hover:border-purple-500/50 rounded p-2 text-[10px] font-mono transition text-left truncate";
+            btn.innerText = m.name;
+            btn.onclick = async () => {
+                const input = document.getElementById('yab-input').value;
+                const output = document.getElementById('yab-output');
+                try {
+                    if(m.async) output.value = "Processing...";
+                    output.value = m.async ? await m.fn(input) : m.fn(input);
+                } catch(e) {
+                    output.value = "Error: " + e.message;
+                }
+            };
+            grid.appendChild(btn);
+        });
+    }
+
+    // --- 8. SHARED LOGIC ---
+    const defaultProxyConfig = {
+      enabled: false,
+      disableLocal: false,
+      type: 'nylon', // nylon | public | custom
+      custom: []     // [{ host, port, protocol }]
+    };
+
+    let nylonProxyConfig =
+      JSON.parse(localStorage.getItem('nylon_proxy_config')) ||
+      defaultProxyConfig;
+    
+    function saveProxyConfig() {
+      nylonProxyConfig.enabled =
+        document.getElementById('proxy-enabled').checked;
+      nylonProxyConfig.disableLocal =
+        document.getElementById('proxy-disable-local').checked;
+      nylonProxyConfig.type =
+        document.getElementById('proxy-type').value;
+
+      localStorage.setItem(
+        'nylon_proxy_config',
+        JSON.stringify(nylonProxyConfig)
+      );
+    }
+
+    function addCustomProxy() {
+      nylonProxyConfig.custom.push({
+        protocol: 'http',
+        host: '',
+        port: ''
+      });
+      renderCustomProxies();
+      saveProxyConfig();
+    }
+
+    function renderCustomProxies() {
+      const list = document.getElementById('custom-proxy-list');
+      list.innerHTML = '';
+
+      nylonProxyConfig.custom.forEach((p, i) => {
+        const row = document.createElement('div');
+        row.className = "flex gap-1";
+
+        row.innerHTML = `
+          <select onchange="updateProxy(${i}, 'protocol', this.value)">
+            <option ${p.protocol==='http'?'selected':''}>http</option>
+            <option ${p.protocol==='https'?'selected':''}>https</option>
+            <option ${p.protocol==='socks5'?'selected':''}>socks5</option>
+          </select>
+          <input placeholder="IP / URL"
+            value="${p.host}"
+            onchange="updateProxy(${i}, 'host', this.value)">
+          <input placeholder="Port"
+            value="${p.port}"
+            onchange="updateProxy(${i}, 'port', this.value)">
+          <button onclick="removeProxy(${i})">✕</button>
+        `;
+        list.appendChild(row);
+      });
+    }
+
+    function updateProxy(i, key, val) {
+      nylonProxyConfig.custom[i][key] = val;
+      saveProxyConfig();
+    }
+
+    function removeProxy(i) {
+      nylonProxyConfig.custom.splice(i, 1);
+      renderCustomProxies();
+      saveProxyConfig();
+    }
+
+    async function nylonFetch(url, options) {
+      const cfg = nylonProxyConfig;
+
+      if (!cfg.enabled) {
+        if (cfg.disableLocal) {
+          throw new Error("Local network disabled");
+        }
+        return fetch(url, options);
+      }
+
+      // Choose proxy
+      let proxy = null;
+
+      if (cfg.type === 'custom') {
+        proxy = cfg.custom[Math.floor(Math.random() * cfg.custom.length)];
+      }
+
+      if (!proxy && cfg.disableLocal) {
+        throw new Error("No proxy available");
+      }
+
+      // CLIENT-SIDE NOTE:
+      // Browser JS cannot tunnel real proxies directly.
+      // You MUST forward through a proxy relay / worker.
+      return fetch(`/proxy-relay`, {
+        method: 'POST',
+        body: JSON.stringify({
+          target: url,
+          options,
+          proxy
+        })
+      });
+    }
+
+
+    function toggleInstall(pkgId) {
+        let installed = store.getPackages();
+        const index = installed.indexOf(pkgId);
+        if (index > -1) {
+            installed.splice(index, 1);
+            const title = document.getElementById('matrix-app-title').innerText;
+            if (!document.getElementById('nav-matrix').classList.contains('hidden')) {
+                 exitMatrix();
+            }
+        } else {
+            installed.push(pkgId);
+        }
+        store.setPackages(installed);
+        renderPackages(document.getElementById('package-search').value);
+        renderLibrary();
+        updateStats();
+    }
+
+    function renderLibrary() {
+        const container = document.getElementById('library-container');
+        const emptyState = document.getElementById('library-empty-state');
+        const installedIds = store.getPackages();
+
+        container.innerHTML = '';
+        if (installedIds.length === 0) {
+            emptyState.classList.remove('hidden');
+            return;
+        }
+        emptyState.classList.add('hidden');
+
+        installedIds.forEach(id => {
+            const pkg = packagesDB.find(p => p.id === id);
+            if (!pkg) return;
+            
+            let tagsHtml = '';
+            if(pkg.tags) {
+                pkg.tags.forEach(tag => {
+                    if(tag.includes('developer')) tagsHtml += `<span class="tag-badge tag-dev mr-1">${tag}</span>`;
+                });
+            }
+
+            const card = document.createElement('div');
+            card.className = "glass-panel p-5 rounded-xl border-l-4 border-purple-500 flex flex-col justify-between";
+            card.innerHTML = `
+                <div>
+                    <h3 class="font-bold text-gray-200">${pkg.name}</h3>
+                    <div class="my-1">${tagsHtml}</div>
+                    <p class="text-xs text-gray-500 mt-2">${pkg.shortDesc}</p>
+                </div>
+                <div class="flex gap-2 mt-4">
+                    <button onclick="launchApp('${pkg.id}')" class="flex-1 bg-zinc-800 hover:bg-green-900/30 hover:text-green-400 py-2 rounded text-sm font-medium transition flex items-center justify-center gap-2">
+                        <i data-lucide="play" class="w-3 h-3"></i> Launch
+                    </button>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+        lucide.createIcons();
+    }
+
+    function launchApp(pkgId) {
+        const pkg = packagesDB.find(p => p.id === pkgId);
+        document.getElementById('nav-matrix').classList.remove('hidden');
+        document.getElementById('matrix-app-title').innerText = `Running: ${pkg.name}`;
+
+        if(pkgId === 'yab-encrypter') {
+            document.getElementById('matrix-container').innerHTML = renderYabEncrypter();
+            initYabEncrypter();
+        } else if(pkgId === 'bitmoji-lab') {
+            document.getElementById('matrix-container').innerHTML = renderBitmojiLab();
+            initBitmojiLab();
+        } else {
+            document.getElementById('matrix-container').innerHTML = pkg.appHtml;
+        }
+
+        showPage('matrix');
+        lucide.createIcons();
+    }
+
+    function exitMatrix() {
+        document.getElementById('nav-matrix').classList.add('hidden');
+        document.getElementById('matrix-container').innerHTML = '';
+        showPage('home');
+    }
+
+    function filterPackages() {
+        const term = document.getElementById('package-search').value.toLowerCase();
+        renderPackages(term);
+    }
+
+    function updateStats() {
+        document.getElementById('module-count-display').innerText = store.getPackages().length;
+    }
+
+    // Modal
+    function openDetails(pkgId) {
+        const pkg = packagesDB.find(p => p.id === pkgId);
+        const modal = document.getElementById('details-modal');
+        const content = document.getElementById('modal-content-box');
+        const installed = store.getPackages();
+        
+        document.getElementById('modal-title').innerText = pkg.name;
+        document.getElementById('modal-version').innerText = `v${pkg.versions[0]}`;
+        document.getElementById('modal-desc').innerText = pkg.longDesc;
+        
+        let tagsHtml = '';
+        if(pkg.tags) {
+            pkg.tags.forEach(tag => {
+                let cls = tag.includes('developer') ? 'tag-dev' : 'tag-trusted';
+                tagsHtml += `<span class="tag-badge ${cls}">${tag}</span>`;
+            });
+        }
+        document.getElementById('modal-tags').innerHTML = tagsHtml;
+        
+        const btn = document.getElementById('modal-action-btn');
+        if (installed.includes(pkg.id)) {
+            btn.innerText = "Uninstall";
+            btn.className = "bg-red-600 hover:bg-red-700 px-6 py-2 rounded-lg font-bold transition";
+        } else {
+            btn.innerText = "Install";
+            btn.className = "bg-purple-600 hover:bg-purple-700 px-6 py-2 rounded-lg font-bold transition";
+        }
+        btn.onclick = () => { toggleInstall(pkg.id); closeModal('details-modal'); };
+
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            modal.classList.remove('opacity-0');
+            content.classList.remove('scale-95');
+        }, 10);
+    }
+
+    function closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        // Only try to scale content if it's the details modal
+        if(modalId === 'details-modal') {
+             const content = document.getElementById('modal-content-box');
+             content.classList.add('scale-95');
+        }
+        modal.classList.add('opacity-0');
+        setTimeout(() => modal.classList.add('hidden'), 300);
+    }
+
+    // --- NETWORK / MOD LOGIC ---
+    
+    function addHeaderRow() {
+        const container = document.getElementById('headers-container');
+        const div = document.createElement('div');
+        div.className = 'flex gap-2 header-row';
+        div.innerHTML = `
+            <input type="text" placeholder="Key" class="header-key flex-1 bg-black/30 border border-white/10 rounded px-3 py-1 text-xs text-gray-300 focus:border-purple-500 outline-none">
+            <input type="text" placeholder="Value" class="header-val flex-1 bg-black/30 border border-white/10 rounded px-3 py-1 text-xs text-gray-300 focus:border-purple-500 outline-none">
+            <button onclick="this.parentElement.remove()" class="text-gray-600 hover:text-red-400 px-2"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
+        `;
+        container.appendChild(div);
+        lucide.createIcons();
+    }
+
+    async function sendRealRequest() {
+        const method = document.getElementById('req-method').value;
+        const url = document.getElementById('req-url').value;
+        const bodyStr = document.getElementById('req-body').value;
+        const output = document.getElementById('req-output');
+        
+        output.innerText = `Sending ${method} to ${url}...`;
+        output.className = "w-full h-64 bg-[#050505] border border-white/5 rounded-xl p-4 font-mono text-xs overflow-y-auto text-yellow-400 animate-pulse";
+        try {
+            const options = { method: method, headers: {} };
+            document.querySelectorAll('.header-row').forEach(row => {
+                const key = row.querySelector('.header-key').value;
+                const val = row.querySelector('.header-val').value;
+                if(key && val) options.headers[key] = val;
+            });
+            if (method !== 'GET' && method !== 'HEAD') {
+                 if(bodyStr) {
+                    options.body = bodyStr;
+                    if(!Object.keys(options.headers).some(k => k.toLowerCase() === 'content-type')) {
+                        options.headers['Content-Type'] = 'application/json';
+                    }
+                 }
+            }
+            
+            const res = await fetch(url, options);
+            let data;
+            const contentType = res.headers.get("content-type");
+            
+            if(document.getElementById('scraper-toggle-btn').innerText.includes('JSON')) {
+                 data = await res.text();
+            } else {
+                if (contentType && contentType.indexOf("application/json") !== -1) {
+                    data = await res.json();
+                } else {
+                    data = await res.text();
+                }
+            }
+
+            output.className = "w-full h-64 bg-[#050505] border border-white/5 rounded-xl p-4 font-mono text-xs overflow-y-auto text-green-400";
+            if (typeof data === 'object') {
+                output.innerText = JSON.stringify(data, null, 2);
+            } else {
+                output.innerText = data;
+            }
+
+            const history = store.getModHistory();
+            history.unshift({ method, url, status: res.status });
+            if(history.length > 20) history.pop();
+            store.setModHistory(history);
+            renderModHistory();
+        } catch (err) {
+            output.className = "w-full h-64 bg-[#050505] border border-red-900/50 rounded-xl p-4 font-mono text-xs overflow-y-auto text-red-400";
+            output.innerText = `Error: ${err.message}`;
+        }
+    }
+
+    function toggleScraperMode() {
+        const btn = document.getElementById('scraper-toggle-btn');
+        const output = document.getElementById('req-output');
+        
+        if(btn.innerText.includes('Scraper')) {
+            btn.innerText = "Switch to JSON View";
+            output.classList.add('text-blue-300');
+            output.classList.remove('text-green-400');
+            document.getElementById('req-method').value = "GET";
+        } else {
+            btn.innerText = "Switch to Scraper View";
+            output.classList.remove('text-blue-300');
+            output.classList.add('text-green-400');
+        }
+    }
+
+    function renderModHistory() {
+        const list = document.getElementById('req-history-list');
+        const history = store.getModHistory();
+        list.innerHTML = '';
+        history.forEach(h => {
+            const color = h.status >= 200 && h.status < 300 ? 'text-green-400' : 'text-red-400';
+            list.innerHTML += `<div class="flex items-center justify-between bg-white/5 p-2 rounded text-xs font-mono"><div class="truncate flex-1"><span class="font-bold ${color} mr-2">${h.method}</span><span class="text-gray-400">${h.url}</span></div><span class="text-gray-500 ml-2">${h.status || 'ERR'}</span></div>`;
+        });
+    }
+
+    function clearRequestHistory() {
+        store.setModHistory([]);
+        renderModHistory();
+    }
+
+    function toggleModMode() {
+        const chk = document.getElementById('toggle-mod-mode');
+        store.setModEnabled(chk.checked);
+        if (chk.checked) document.getElementById('nav-network').classList.remove('hidden');
+        else document.getElementById('nav-network').classList.add('hidden');
+    }
+
+    function clearSelectedData() {
+        const checkboxes = document.querySelectorAll('.data-checkbox:checked');
+        if(checkboxes.length === 0) return;
+        
+        checkboxes.forEach(cb => {
+            if(cb.value === 'all') localStorage.clear();
+            if(cb.value === 'mod') {
+                localStorage.removeItem('nexus_mod_history');
+                localStorage.removeItem('nylon_current_data');
+                localStorage.removeItem('nexus_id_db');
+            }
+            if(cb.value === 'settings') localStorage.removeItem('nexus_mod_mode');
+            if(cb.value === 'packages') localStorage.removeItem('nexus_installed');
+        });
+        location.reload();
+    }
+
+    // Auto-load avatar on page load
+    function getNylonHeaders() {
+        const token = localStorage.getItem('nylon_token') || '';
+        const bearer = localStorage.getItem('nylon_bearer') || '';
+
+        // Determine which auth method to use based on what's available
+        const headers = { 'Content-Type': 'application/json' };
+
+        if (bearer) {
+            headers['Authorization'] = `Bearer ${bearer}`;
+        } else if (token) {
+            headers['Bitmoji-Token'] = token;
+        }
+
+        return Object.keys(headers).length > 1 ? headers : null;
+    }
+
+    // <---> BITMOJI LAB CORE <---> 
+    // <---> BITMOJI LAB CORE <---> 
+    // <---> BITMOJI LAB CORE <---> 
+    // <---> BITMOJI LAB CORE <---> 
+    // <---> BITMOJI LAB CORE <---> 
+
+        // --- BITMOJI LAB FUNCTIONS ---
+
+        function bmGenerateUrl(id, category) {
+            const BASE =
+                "https://preview.bitmoji.com/bm-preview/v3/avatar/body" +
+                "?scale=2&gender=1&style=5&rotation=0" +
+                "&face_proportion=16&face_lines=-1&cheek_details=-1" +
+                "&jaw=1389&brow=1538&eye=1613&eye_details=-1" +
+                "&eye_size=1&eye_spacing=1" +
+                "&pupil=2152" +
+                "&eyelash=-1&nose=1435&mouth=2337&ear=1424" +
+                "&beard=-1" +
+                "&skin_tone=12434877" +
+                "&hair=2307&hair_tone=2039326" +
+                "&body=10&breast=3" +
+                "&clothing_type=1&is_tucked=0" +
+                "&brow_tone=1579802" +
+                "&top_tone1=2829634" +
+                "&bottom_tone1=16448250" +
+                "&footwear_tone1=11930417" +
+                "&ua=2";
+
+            const SINGLE_SLOT_PARAMS = [
+                "hat", "glasses", "pupil_tone", "top", "bottom", 
+                "outerwear", "footwear", "outfit"
+            ];
+
+            let url = BASE;
+            SINGLE_SLOT_PARAMS.forEach(p => {
+                url = url.replace(new RegExp(`&${p}=[^&]*`, "g"), "");
+            });
+
+            return `${url}&${category}=${id}`;
+        }
+
+        function bmPreviewRef(id, category) {
+            if (NSFW_IDS.includes(id) && !bmIsAdultVerified) {
+                bmOpenAgeModal();
+                return;
+            }
+
+            const url = bmGenerateUrl(id, category);
+            document.getElementById('bm-modal-img').src = url;
+            document.getElementById('bm-modal-label').innerText = `${category.toUpperCase()}: ${id}`;
+            document.getElementById('bm-preview-modal').classList.remove('hidden');
+        }
+
+        async function bmStartScrape() {
+            const category = document.getElementById('bm-category').value;
+            const startNum = parseInt(document.getElementById('bm-start-num').value);
+            const endNum = parseInt(document.getElementById('bm-end-num').value);
+            const batchSize = parseInt(document.getElementById('bm-batch-size').value);
+            const grid = document.getElementById('bm-grid');
+
+            bmIsScraping = true;
+            bmStopRequested = false;
+            bmCurrentResults = [];
+            grid.innerHTML = '';
+
+            bmToggleButtons(true);
+            bmUpdateStatus(`Scanning: ${category}`);
+
+            for (let i = startNum; i < endNum; i += batchSize) {
+                if (bmStopRequested) break;
+
+                const batchPromises = [];
+                for (let t = i; t < Math.min(i + batchSize, endNum); t++) {
+                    if (bmStopRequested) break;
+
+                    const url = bmGenerateUrl(t, category);
+                    const isNSFW = NSFW_IDS.includes(t);
+                    bmAddItemToGrid(t, url, isNSFW, category);
+                    bmCurrentResults.push({ id: t, url, isNSFW, category });
+
+                    batchPromises.push(new Promise(res => {
+                        const img = new Image();
+                        img.onload = img.onerror = res;
+                        img.src = url;
+                    }));
+                }
+
+                await Promise.all(batchPromises);
+                bmUpdateStatus(`Scanning: ${i} / ${endNum}`);
+                await new Promise(r => setTimeout(r, 200)); 
+            }
+
+            bmFinalizeScrape();
+        }
+
+        function bmStopScrape() {
+            bmStopRequested = true;
+            bmUpdateStatus("Stopping...");
+        }
+
+        function bmFinalizeScrape() {
+            bmIsScraping = false;
+            bmToggleButtons(false);
+            bmUpdateStatus(bmStopRequested ? "Stopped" : "Complete");
+        }
+
+        function bmToggleButtons(running) {
+            document.getElementById('bm-run-btn').classList.toggle('hidden', running);
+            document.getElementById('bm-stop-btn').classList.toggle('hidden', !running);
+        }
+
+        function bmUpdateStatus(text) {
+            document.getElementById('bm-status-badge').innerText = text.toUpperCase();
+        }
+
+    function bmAddItemToGrid(id, url, isNSFW, category) {
+        const card = document.createElement('div');
+        card.className = "bm-image-card rounded-xl p-2 flex flex-col items-center group cursor-pointer relative"; // Changed here
+        card.onclick = () => {
+            document.getElementById('bm-modal-img').src = url;
+            document.getElementById('bm-modal-label').innerText = `ID: ${id}`;
+            document.getElementById('bm-preview-modal').classList.remove('hidden');
+        };
+
+        const blurClass = (isNSFW && !bmIsAdultVerified) ? 'nsfw-blur' : 'nsfw-unblur';
+
+        card.innerHTML = `
+            <div class="w-full aspect-square bg-black/40 rounded-lg overflow-hidden flex items-center justify-center relative">
+                <img src="${url}" loading="lazy" class="max-h-full object-contain ${blurClass} ${isNSFW ? 'nsfw-target' : ''}">
+                ${isNSFW ? '<div class="absolute top-1 right-1 bg-red-600 text-[8px] px-1 rounded font-bold z-10 text-white shadow-md">18+</div>' : ''}
+            </div>
+            <span class="mt-2 text-[10px] font-mono text-gray-500 group-hover:text-purple-400 select-all">${id}</span>
+        `;
+        document.getElementById('bm-grid').appendChild(card);
+    }
+
+        function bmToggleInfo() {
+            document.getElementById('bm-info-panel').classList.toggle('translate-x-full');
+        }
+
+        function bmDiscardCurrent() {
+            if(bmIsScraping) bmStopScrape();
+            document.getElementById('bm-grid').innerHTML = '';
+            bmCurrentResults = [];
+            bmUpdateStatus("Discarded");
+        }
+
+        function bmResetUI() {
+            bmDiscardCurrent();
+            bmUpdateStatus("Ready");
+        }
+
+        function bmLoadHistory() {
+            const container = document.getElementById('bm-saved-list-content');
+            const saved = JSON.parse(localStorage.getItem('bm_history_v2') || '[]');
+
+            container.innerHTML = '';
+            if(saved.length === 0) {
+                container.innerHTML = '<div class="px-5 text-[10px] text-gray-600 italic">No history found.</div>';
+                return;
+            }
+
+            saved.forEach(batch => {
+                const div = document.createElement('div');
+                div.className = "sidebar-item px-5 py-3 flex items-center justify-between group border-b border-white/5";
+
+                div.innerHTML = `
+                    <div class="flex-1 min-w-0 mr-2" onclick="bmLoadSavedBatch(${batch.id})">
+                        <p class="text-xs font-medium truncate text-gray-300 group-hover:text-white">${batch.name}</p>
+                        <p class="text-[9px] text-gray-600 font-mono mt-0.5">${batch.category.toUpperCase()} • ${batch.items.length} ITEMS</p>
+                    </div>
+                    <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onclick="bmOpenEditModal(${batch.id})" class="p-1.5 hover:bg-purple-500/20 hover:text-purple-400 rounded transition"><i data-lucide="edit-3" size="12"></i></button>
+                        <button onclick="bmOpenDeleteModal(${batch.id})" class="p-1.5 hover:bg-red-500/20 hover:text-red-500 rounded transition"><i data-lucide="trash" size="12"></i></button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+            lucide.createIcons();
+        }
+
+        function bmLoadSavedBatch(id) {
+            const saved = JSON.parse(localStorage.getItem('bm_history_v2') || '[]');
+            const batch = saved.find(b => b.id === id);
+            if (!batch) return;
+
+            document.getElementById('bm-grid').innerHTML = '';
+            document.getElementById('bm-category').value = batch.category;
+            batch.items.forEach(item => {
+                bmAddItemToGrid(item.id, item.url, item.isNSFW, batch.category);
+            });
+            bmCurrentResults = batch.items;
+            bmUpdateStatus(`Loaded: ${batch.name}`);
+        }
+
+        function bmOpenSaveModal() {
+            if(bmIsScraping) bmStopScrape();
+            if(bmCurrentResults.length === 0) return; 
+
+            bmInputModalMode = 'save';
+            document.getElementById('bm-input-modal-title').innerText = "Save Collection";
+            document.getElementById('bm-input-modal-desc').innerText = "Enter a name to save this scan.";
+            document.getElementById('bm-input-modal-field').value = `Scan ${new Date().toLocaleTimeString()}`;
+            document.getElementById('bm-input-modal').classList.remove('hidden');
+            document.getElementById('bm-input-modal-field').focus();
+        }
+
+        function bmOpenEditModal(id) {
+            const saved = JSON.parse(localStorage.getItem('bm_history_v2') || '[]');
+            const batch = saved.find(b => b.id === id);
+            if(!batch) return;
+
+            bmInputModalMode = 'edit';
+            bmEditingBatchId = id;
+            document.getElementById('bm-input-modal-title').innerText = "Rename Collection";
+            document.getElementById('bm-input-modal-desc').innerText = "Enter a new name for this saved batch.";
+            document.getElementById('bm-input-modal-field').value = batch.name;
+            document.getElementById('bm-input-modal').classList.remove('hidden');
+            document.getElementById('bm-input-modal-field').focus();
+        }
+
+        function bmCloseInputModal() {
+            document.getElementById('bm-input-modal').classList.add('hidden');
+            bmInputModalMode = null;
+            bmEditingBatchId = null;
+        }
+
+        function bmCommitInputModal() {
+            const val = document.getElementById('bm-input-modal-field').value;
+            if(!val) return;
+
+            const saved = JSON.parse(localStorage.getItem('bm_history_v2') || '[]');
+
+            if (bmInputModalMode === 'save') {
+                saved.push({
+                    id: Date.now(),
+                    name: val,
+                    category: document.getElementById('bm-category').value,
+                    items: bmCurrentResults
+                });
+            } else if (bmInputModalMode === 'edit') {
+                const index = saved.findIndex(b => b.id === bmEditingBatchId);
+                if (index > -1) saved[index].name = val;
+            }
+
+            localStorage.setItem('bm_history_v2', JSON.stringify(saved));
+            bmLoadHistory();
+            bmCloseInputModal();
+        }
+
+        function bmOpenDeleteModal(id) {
+            bmDeletingBatchId = id;
+            document.getElementById('bm-delete-modal').classList.remove('hidden');
+        }
+
+        function bmCloseDeleteModal() {
+            document.getElementById('bm-delete-modal').classList.add('hidden');
+            bmDeletingBatchId = null;
+        }
+
+        function bmCommitDelete() {
+            if (bmDeletingBatchId) {
+                let saved = JSON.parse(localStorage.getItem('bm_history_v2') || '[]');
+                saved = saved.filter(b => b.id !== bmDeletingBatchId);
+                localStorage.setItem('bm_history_v2', JSON.stringify(saved));
+                bmLoadHistory();
+            }
+            bmCloseDeleteModal();
+        }
+
+        function bmOpenAgeModal() {
+            if (bmIsAdultVerified) {
+                bmIsAdultVerified = false;
+                const btn = document.getElementById('bm-age-gate-btn');
+                btn.innerText = "18+ OFF";
+                btn.classList.replace('bg-green-900/20', 'bg-red-900/20');
+                btn.classList.replace('text-green-400', 'text-red-400');
+                btn.classList.replace('border-green-500/30', 'border-red-500/30');
+
+                document.getElementById('bm-nsfw-list').classList.remove('nsfw-unblur');
+                document.getElementById('bm-nsfw-list').classList.add('nsfw-blur');
+
+                document.querySelectorAll('.nsfw-target').forEach(el => {
+                    el.classList.remove('nsfw-unblur');
+                    el.classList.add('nsfw-blur');
+                });
+            } else {
+                document.getElementById('bm-age-modal').classList.remove('hidden');
+            }
+        }
+
+        function bmCloseAgeModal() {
+            document.getElementById('bm-age-modal').classList.add('hidden');
+        }
+
+        function bmConfirmAge() {
+            bmIsAdultVerified = true;
+            bmCloseAgeModal();
+
+            const btn = document.getElementById('bm-age-gate-btn');
+            btn.innerText = "18+ ON";
+            btn.classList.replace('bg-red-900/20', 'bg-green-900/20');
+            btn.classList.replace('text-red-400', 'text-green-400');
+            btn.classList.replace('border-red-500/30', 'border-green-500/30');
+
+            document.getElementById('bm-nsfw-list').classList.remove('nsfw-blur');
+            document.getElementById('bm-nsfw-list').classList.add('nsfw-unblur');
+
+            document.querySelectorAll('.nsfw-target').forEach(el => {
+                el.classList.remove('nsfw-blur');
+                el.classList.add('nsfw-unblur');
+            });
+
+            if(document.getElementById('bm-info-panel').classList.contains('translate-x-full')) {
+                bmToggleInfo();
+            }
+        }
+
+        function bmClosePreview() {
+            document.getElementById('bm-preview-modal').classList.add('hidden');
+        }
+    
+    // <---> BITMOJI LAB CORE <---> 
+    // <---> BITMOJI LAB CORE <---> 
+    // <---> BITMOJI LAB CORE <---> 
+    // <---> BITMOJI LAB CORE <---> 
+    // <---> BITMOJI LAB CORE <---> 
+</script>
+</body>
+</html>
